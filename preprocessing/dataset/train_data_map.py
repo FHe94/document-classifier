@@ -2,6 +2,36 @@ import json
 import os
 import random
 
+
+class DataMapFactory:
+
+    @staticmethod
+    def create_from_file(path):
+        file_content_json = json.load(open(path, encoding="utf-8"))
+        data_dict = {}
+        for key, value in file_content_json.items():
+            data_dict[key] = TestDataInfo(value["label"], value["index"], value["filenames"], value["path"])
+        return TrainingDataMap(data_dict)
+
+    @staticmethod
+    def create_from_testdata(path, file_extensions = [".txt"], label_extraction_function = None):
+        testdata_dict = {}
+        label_index = 0
+        for objectname in os.listdir(path):
+            label_path = os.path.join(path, objectname)
+            if os.path.isdir(label_path):
+                label = objectname if label_extraction_function is None else label_extraction_function(objectname)
+                test_files = TrainingDataMap.__filter_test_files(os.listdir(label_path), file_extensions)
+                testdata_dict[label] = TestDataInfo(label, label_index, test_files, label_path)
+                label_index += 1
+        return TrainingDataMap(testdata_dict)
+
+    @staticmethod
+    def __filter_test_files(files, extensions):
+        return [ filename for filename in files if os.path.splitext(filename)[1] in extensions ]
+
+
+
 class TrainingDataMap:
 
     def __init__(self, train_data_dict):
