@@ -1,3 +1,5 @@
+from tensorflow import keras
+from tensorflow.python.client import device_lib
 from .model_parameters import ModelParams
 from .classifier_model import DocumentClassifierModel
 
@@ -8,8 +10,14 @@ class ModelFactory:
         model = self.__create_model(dictionary_length, num_classes, params)
         return DocumentClassifierModel(model)
 
+
     def load_model(self, model_dir):
         model = keras.models.load_model(model_dir, compile=False)
+        return DocumentClassifierModel(model)
+
+    def restore_model(self, path, dictionary_length, num_classes):
+        model = self.__create_model(dictionary_length, num_classes, self.__create_default_model_params(dictionary_length))
+        model.load_weights(path)
         return DocumentClassifierModel(model)
 
     def __create_model(self, dictionary_length, num_classes, model_params):

@@ -2,7 +2,6 @@ import math
 import sklearn.metrics
 import numpy as np
 from tensorflow import keras
-from tensorflow.python.client import device_lib
 
 
 class DocumentClassifierModel:

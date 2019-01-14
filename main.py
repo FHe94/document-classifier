@@ -1,11 +1,12 @@
 import argparse
 import os
 import json
-from dataset_generator import DatasetGenerator
-from model.create_model import ModelFactory, DocumentClassifierModel
+from preprocessing.dataset.dataset_generator import DatasetGenerator
+from model.classifier_model import DocumentClassifierModel
+from model.model_factory import ModelFactory
 from preprocessing.dictionary_operations.dictionary_loader import DictionaryLoader
 from preprocessing.document_processor import DEFAULT_DOCUMENT_PROCESSOR
-from train_data_map import TrainingDataMap
+from preprocessing.dataset.train_data_map import TrainingDataMap
 
 def main():
     args = parse_args()
@@ -80,8 +81,12 @@ def load_or_create_model(model_dir, dictionary_length, num_classes):
     model_path = os.path.join(model_dir, "model.h5")
     model = None
     if os.path.exists(model_path):
-        print("Loading model from \"{}\"".format(model_path))
-        model = model_factory.load_model(model_path)
+        try:
+            print("Loading model from \"{}\"".format(model_path))
+            model = model_factory.load_model(model_path)
+        except Exception as e:
+            print("Error while trying to load model. Trying to restore")
+            model = model_factory.restore_model(model_path, dictionary_length, num_classes)
     else:
         print("No model found. Creating new one!")
         model = model_factory.create_new_model(dictionary_length, num_classes)
