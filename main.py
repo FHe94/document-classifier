@@ -43,7 +43,7 @@ def get_or_create_dict(dict_dir, data_dir):
         print("dictionary found")
         dictionary = loader.load_dictionary(dict_path)
     else:
-        print("dictionary not found, loading from testdata")
+        print("dictionary not found, creating from testdata")
         dictionary = loader.create_from_textdata(data_dir)
         loader.save_dictionary(dictionary, dict_path)
     return dictionary

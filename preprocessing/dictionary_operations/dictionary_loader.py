@@ -3,7 +3,8 @@ import os.path
 import Levenshtein
 from nltk.tokenize import word_tokenize
 import preprocessing.document_processor
-from ..utils import run_operation_parallel
+from .dictionary import Dictionary
+from utils.utils import run_operation_parallel
 
 class DictionaryLoader:
 
@@ -18,7 +19,6 @@ class DictionaryLoader:
 
     def create_from_textdata(self, data_root_dir, document_processor = preprocessing.document_processor.DEFAULT_DOCUMENT_PROCESSOR):
         return self.__dict_creator.create_dictionary(data_root_dir)
-
 
     def save_dictionary(self, dictionary, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -65,7 +65,6 @@ class DictionaryLoader:
     def __is_json_dictionary(self, path):
         return os.path.splitext(path)[1] == ".json"
 
-
 class DictionaryCreator:
 
     def __init__(self, file_extensions = [ ".txt" ], document_processor = preprocessing.document_processor.DEFAULT_DOCUMENT_PROCESSOR):
@@ -109,38 +108,3 @@ class DictionaryCreator:
             for token in tokens:
                 words[token] = 1
         return words
-
-    
-
-
-class Dictionary:
-
-    def __init__(self, values):
-        self.__values = values.copy()
-        self.__unknown_word_index = values["<unknown>"]
-        self.__length = len(values.keys())
-
-    def get_token_list(self):
-        return list(self.__values.keys())
-
-    def find_similar_word(self, word, max_distance):
-        best_word = None
-        smallest_distance = 5000
-        for value in self.__values:
-            distance = Levenshtein.distance(word, value)
-            if distance == 0:
-                return value
-            elif distance < smallest_distance:
-                smallest_distance = distance
-                best_word = value
-        print("replacing {} with {}".format(word, best_word))
-        return best_word
-
-    def get_word_index(self, word):
-        return self.__values.get(word, self.__unknown_word_index)
-
-    def get_values(self):
-        return self.__values
-
-    def get_length(self):
-        return self.__length

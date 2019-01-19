@@ -2,6 +2,7 @@ import os
 from tempfile import mkstemp
 from nltk.tokenize import word_tokenize
 from .processing_steps.processing_steps import FilterTokens, WordPlaceholders, Normalize, Stemming
+from .ocr.ocr_engine import TesseractOcrEngine
 
 class DocumentProcessor:
 
@@ -9,10 +10,11 @@ class DocumentProcessor:
 
     def __init__(self, processing_steps = None):
         self.__processing_steps = DocumentProcessor.__default_processing_steps if processing_steps is None else processing_steps
+        self.__ocr_engine = TesseractOcrEngine()
 
     def process_image_document(self, document_path):
         with TempTextFile() as outpath:
-            os.system("tesseract \"{}\" \"{}\" -l deu text".format(document_path, os.path.splitext(outpath)[0] ))
+            self.__ocr_engine.run_ocr(document_path, os.path.splitext(outpath)[0], "text")
             return self.process_text_document(outpath)
 
     def process_text_document(self, document_path):
