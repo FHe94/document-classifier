@@ -33,10 +33,11 @@ class ModelFactory:
         output_probabilities = self.__create_dense_layers(encoder_outputs, num_classes, model_params)
         return keras.Model(inputs=encoder_inputs, outputs=output_probabilities)
 
-    def __create_lstm_layers(self, lstm_inputs, model_params):
+    def __create_lstm_layers(self, lstm_inputs, model_params, is_gpu = True):
         lstm_outputs = lstm_inputs
+        lstm_function = keras.layers.CuDNNLSTM if is_gpu else keras.layers.LSTM
         for i in range(model_params.num_lstm_layers):
-            lstm_outputs = keras.layers.CuDNNLSTM(model_params.lstm_units_per_layer, return_sequences=True, name="LSTM_Layer_{}".format(i+1))(lstm_outputs)
+            lstm_outputs = lstm_function(model_params.lstm_units_per_layer, return_sequences=True, name="LSTM_Layer_{}".format(i+1))(lstm_outputs)
         return lstm_outputs
 
     def __create_dense_layers(self, dense_inputs, num_classes, model_params):
@@ -48,7 +49,14 @@ class ModelFactory:
             num_classes, activation="softmax", name="Classifier_Output")(dense_outputs)
 
     def __create_model_cpu(self, dictionary_length, num_classes, model_params):
-        raise Exception("not implemented")
+        encoder_inputs = keras.layers.Input(
+            shape=(None,), name="Encoder_Inputs", sparse=False)
+        embedding = keras.layers.Embedding(
+            dictionary_length, model_params.embedding_size, name="Embedding")(encoder_inputs)
+        lstm_outputs = self.__create_lstm_layers(embedding, model_params, is_gpu=False)
+        encoder_outputs = keras.layers.Lambda(lambda x: keras.backend.sum(x, axis=1, keepdims=False))(lstm_outputs)
+        output_probabilities = self.__create_dense_layers(encoder_outputs, num_classes, model_params)
+        return keras.Model(inputs=encoder_inputs, outputs=output_probabilities)
 
     def __is_gpu_version(self):
         devices = device_lib.list_local_devices()

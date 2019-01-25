@@ -6,10 +6,8 @@ from .ocr.ocr_engine import TesseractOcrEngine
 
 class DocumentProcessor:
 
-    __default_processing_steps = [ Normalize(), FilterTokens(), Stemming(), WordPlaceholders()]
-
-    def __init__(self, processing_steps = None):
-        self.__processing_steps = DocumentProcessor.__default_processing_steps if processing_steps is None else processing_steps
+    def __init__(self, processing_steps):
+        self.__processing_steps = processing_steps
         self.__ocr_engine = TesseractOcrEngine()
 
     def process_image_document(self, document_path):
@@ -48,6 +46,3 @@ class TempTextFile:
 
     def __exit__(self, arg1, arg2, arg3):
         os.remove(self.__path)
-
-
-DEFAULT_DOCUMENT_PROCESSOR = DocumentProcessor()

@@ -9,6 +9,9 @@ class ProcessingStep:
     def process(self, tokens):
         return tokens
 
+    def _is_placeholder(self, token):
+        return token.startswith("<") and token.endswith(">")
+
 class Normalize(ProcessingStep):
 
     __single_low_quotation_mark = "‚"
@@ -61,4 +64,12 @@ class Stemming(ProcessingStep):
         self.__stemmer = SnowballStemmer("german", ignore_stopwords=True)
 
     def process(self, tokens):
-        return [ self.__stemmer.stem(token) for token in tokens ]
+        return [ token if self._is_placeholder(token) else self.__stemmer.stem(token) for token in tokens ]
+
+class DictionaryLookup(ProcessingStep):
+    
+    def __init__(self, dictionary):
+        self.__dictionary = dictionary
+
+    def process(self, tokens):
+        return [ token for token in tokens if token in self.__dictionary or self._is_placeholder(token) ]

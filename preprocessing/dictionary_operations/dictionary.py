@@ -1,9 +1,19 @@
 class Dictionary:
 
+    __unknown_word_placeholder = "<unknown>"
+
     def __init__(self, values):
         self.__values = values.copy()
-        self.__unknown_word_index = values["<unknown>"]
-        self.__length = len(values.keys())
+
+        if self.__unknown_word_placeholder in values:
+            self.__unknown_word_index = values[self.__unknown_word_placeholder]
+        else:
+            self.__values[self.__unknown_word_placeholder] = len(values)
+        
+        self.__length = len(self.__values)
+
+    def __contains__(self, key):
+        return key in self.__values
 
     def get_token_list(self):
         return list(self.__values.keys())
@@ -18,7 +28,6 @@ class Dictionary:
             elif distance < smallest_distance:
                 smallest_distance = distance
                 best_word = value
-        print("replacing {} with {}".format(word, best_word))
         return best_word
 
     def get_word_index(self, word):

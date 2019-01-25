@@ -3,12 +3,11 @@ import numpy as np
 import os.path
 import random
 from tensorflow.keras.utils import Sequence
-from ..document_processor import DEFAULT_DOCUMENT_PROCESSOR
 from .batch_creator import BatchCreator
 
 class DatasetGenerator(Sequence):
 
-    def __init__(self, samples, labels, batch_size, dictionary, document_processor = DEFAULT_DOCUMENT_PROCESSOR, shuffle_samples = True):
+    def __init__(self, samples, labels, batch_size, dictionary, document_processor, shuffle_samples = True):
         self.__num_samples = len(samples)
         self.__initialize_data(samples, labels, shuffle_samples)
         self.__batch_creator = BatchCreator(dictionary, document_processor)

@@ -5,8 +5,12 @@ from preprocessing.dataset.dataset_generator import DatasetGenerator
 from model.classifier_model import DocumentClassifierModel
 from model.model_factory import ModelFactory
 from preprocessing.dictionary_operations.dictionary_loader import DictionaryLoader
-from preprocessing.document_processor import DEFAULT_DOCUMENT_PROCESSOR
+from preprocessing.document_processor import DocumentProcessor
 from preprocessing.dataset.train_data_map import TrainingDataMap
+from preprocessing.processing_steps import processing_steps
+import preprocessing.document_processors as processors
+
+DOCUMENT_PROCESSOR = processors.default_document_processor
 
 def main():
     args = parse_args()
@@ -29,13 +33,13 @@ def initialize_model_dir(model_dir, train_data_dir, mode):
     if not os.path.exists(os.path.join(model_dir, "model.h5")) and mode == "test":
         raise Exception("Model does not exist yet. Use \"train\" first!")
     os.makedirs(model_dir, exist_ok=True)
-    dictionary = get_or_create_dict(model_dir, train_data_dir)
     data_map = get_or_create_samples_map(os.path.join(model_dir, "data_map.json"), train_data_dir)
-    model = load_or_create_model(model_dir, dictionary.get_length(), data_map.get_num_classes())
     train_data, test_data = get_or_create_train_test_split(model_dir, data_map)
+    dictionary = get_or_create_dict(model_dir, train_data)
+    model = load_or_create_model(model_dir, dictionary.get_length(), data_map.get_num_classes())
     return model, dictionary, train_data, test_data
     
-def get_or_create_dict(dict_dir, data_dir):
+def get_or_create_dict(dict_dir, data_map):
     dictionary = None
     dict_path = os.path.join(dict_dir, "dictionary.json")
     loader = DictionaryLoader()
@@ -44,7 +48,7 @@ def get_or_create_dict(dict_dir, data_dir):
         dictionary = loader.load_dictionary(dict_path)
     else:
         print("dictionary not found, creating from testdata")
-        dictionary = loader.create_from_textdata(data_dir)
+        dictionary = loader.create_from_datamap(data_map, DOCUMENT_PROCESSOR)
         loader.save_dictionary(dictionary, dict_path)
     return dictionary
 
@@ -65,7 +69,7 @@ def get_or_create_train_test_split(model_dir, data_map):
     if os.path.isfile(train_data_path) and os.path.isfile(test_data_path):
         return TrainingDataMap.create_from_file(train_data_path), TrainingDataMap.create_from_file(test_data_path)
     else:
-        train_data_map, test_data_map = data_map.split_data(train_samples_per_class = 1000, min_test_samples = 500)
+        train_data_map, test_data_map = data_map.split_data(train_samples_per_class = 1000, min_test_samples = 400)
         train_data_map.save(train_data_path)
         test_data_map.save(test_data_path)
         return train_data_map, test_data_map
@@ -96,14 +100,14 @@ def train_model(model, train_data_map, test_data_map, dictionary, model_dir):
     print("training model")
     train_sample_paths, train_labels = train_data_map.get_data_as_sequence()
     test_sample_paths, test_labels = test_data_map.get_data_as_sequence()
-    train_data_generator = DatasetGenerator(train_sample_paths, train_labels, 128, dictionary)
-    test_data_generator = DatasetGenerator(test_sample_paths, test_labels, 64, dictionary)
-    model.train(train_data_generator, 15, os.path.join(model_dir, "model.h5"), test_data_generator)
+    train_data_generator = DatasetGenerator(train_sample_paths, train_labels, 128, dictionary, DOCUMENT_PROCESSOR)
+    test_data_generator = DatasetGenerator(test_sample_paths, test_labels, 64, dictionary, DOCUMENT_PROCESSOR)
+    model.train(train_data_generator, 30, os.path.join(model_dir, "model.h5"), test_data_generator)
 
 def test_model(model, test_data_map, dictionary):
     print("testing model")
     test_sample_paths, test_labels = test_data_map.get_data_as_sequence()
-    data_generator = DatasetGenerator(test_sample_paths, test_labels, 128, dictionary)
+    data_generator = DatasetGenerator(test_sample_paths, test_labels, 128, dictionary, DOCUMENT_PROCESSOR)
     model.test(data_generator)
 
 if __name__ == "__main__":
