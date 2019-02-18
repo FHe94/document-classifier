@@ -14,13 +14,13 @@ class DocumentClassifierModel:
         self.__model.summary()
         callbacks = [keras.callbacks.ModelCheckpoint(
             checkpoint_path, save_weights_only=False, save_best_only=True)]
-        self.__model.compile(optimizer=keras.optimizers.Adam(),
+        self.__model.compile(optimizer=keras.optimizers.Adadelta(),
          loss='sparse_categorical_crossentropy', metrics=['accuracy'])
         self.__model.fit_generator(train_data_generator, epochs=epochs,
                                    callbacks=callbacks, validation_data=test_data_generator)
 
     def test(self, dataset_generator):
-        self.__model.compile(optimizer=keras.optimizers.Adam(),
+        self.__model.compile(optimizer=keras.optimizers.Adadelta(),
          loss='sparse_categorical_crossentropy', metrics=['accuracy'])
         per_class_correct = np.zeros(self.__num_classes)
         per_class_total = np.zeros(self.__num_classes)
@@ -40,3 +40,5 @@ class DocumentClassifierModel:
     def save(self, path):
         self.__model.save(path, overwrite=True)
 
+    def summary(self):
+        self.__model.summary()

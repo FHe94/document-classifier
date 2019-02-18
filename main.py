@@ -3,7 +3,7 @@ import os
 import json
 from preprocessing.dataset.dataset_generator import DatasetGenerator
 from model.classifier_model import DocumentClassifierModel
-from model.model_factory import ModelFactory
+from model.lstm_model_factory import LSTMModelFactory
 from preprocessing.dictionary_operations.dictionary_loader import DictionaryLoader
 from preprocessing.document_processor import DocumentProcessor
 from preprocessing.dataset.train_data_map import TrainingDataMap
@@ -81,7 +81,7 @@ def get_label_from_dirname(dirname):
 
 
 def load_or_create_model(model_dir, dictionary_length, num_classes):
-    model_factory = ModelFactory()
+    model_factory = LSTMModelFactory()
     model_path = os.path.join(model_dir, "model.h5")
     model = None
     if os.path.exists(model_path):
@@ -102,7 +102,7 @@ def train_model(model, train_data_map, test_data_map, dictionary, model_dir):
     test_sample_paths, test_labels = test_data_map.get_data_as_sequence()
     train_data_generator = DatasetGenerator(train_sample_paths, train_labels, 128, dictionary, DOCUMENT_PROCESSOR)
     test_data_generator = DatasetGenerator(test_sample_paths, test_labels, 64, dictionary, DOCUMENT_PROCESSOR)
-    model.train(train_data_generator, 30, os.path.join(model_dir, "model.h5"), test_data_generator)
+    model.train(train_data_generator, 100, os.path.join(model_dir, "model.h5"), test_data_generator)
 
 def test_model(model, test_data_map, dictionary):
     print("testing model")
