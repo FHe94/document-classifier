@@ -1,9 +1,11 @@
 import argparse
 import os
 import json
-from preprocessing.dataset.dataset_generator import DatasetGenerator
+from preprocessing.dataset.dataset_generator import DatasetGenerator, CNNDatasetGenerator
 from model.classifier_model import DocumentClassifierModel
 from model.lstm_model_factory import LSTMModelFactory
+from model.cnn_model_factory import CNNModelFactory
+from model.dataset_params import CNNDatasetParams
 from preprocessing.dictionary_operations.dictionary_loader import DictionaryLoader
 from preprocessing.document_processor import DocumentProcessor
 from preprocessing.dataset.train_data_map import TrainingDataMap
@@ -81,7 +83,8 @@ def get_label_from_dirname(dirname):
 
 
 def load_or_create_model(model_dir, dictionary_length, num_classes):
-    model_factory = LSTMModelFactory()
+    model_factory = CNNModelFactory()
+    dataset_params = CNNDatasetParams(dictionary_length, num_classes, 1000)
     model_path = os.path.join(model_dir, "model.h5")
     model = None
     if os.path.exists(model_path):
@@ -90,24 +93,24 @@ def load_or_create_model(model_dir, dictionary_length, num_classes):
             model = model_factory.load_model(model_path)
         except Exception as e:
             print("Error while trying to load model. Trying to restore")
-            model = model_factory.restore_model(model_path, dictionary_length, num_classes)
+            model = model_factory.restore_model(model_path, dataset_params)
     else:
         print("No model found. Creating new one!")
-        model = model_factory.create_new_model(dictionary_length, num_classes)
+        model = model_factory.create_new_model(dataset_params)
     return model
 
 def train_model(model, train_data_map, test_data_map, dictionary, model_dir):
     print("training model")
     train_sample_paths, train_labels = train_data_map.get_data_as_sequence()
     test_sample_paths, test_labels = test_data_map.get_data_as_sequence()
-    train_data_generator = DatasetGenerator(train_sample_paths, train_labels, 128, dictionary, DOCUMENT_PROCESSOR)
-    test_data_generator = DatasetGenerator(test_sample_paths, test_labels, 64, dictionary, DOCUMENT_PROCESSOR)
+    train_data_generator = CNNDatasetGenerator(train_sample_paths, train_labels, 128, 1000, dictionary, DOCUMENT_PROCESSOR)
+    test_data_generator = CNNDatasetGenerator(test_sample_paths, test_labels, 64, 1000, dictionary, DOCUMENT_PROCESSOR)
     model.train(train_data_generator, 100, os.path.join(model_dir, "model.h5"), test_data_generator)
 
 def test_model(model, test_data_map, dictionary):
     print("testing model")
     test_sample_paths, test_labels = test_data_map.get_data_as_sequence()
-    data_generator = DatasetGenerator(test_sample_paths, test_labels, 128, dictionary, DOCUMENT_PROCESSOR)
+    data_generator = CNNDatasetGenerator(test_sample_paths, test_labels, 128, 1000, dictionary, DOCUMENT_PROCESSOR)
     model.test(data_generator)
 
 if __name__ == "__main__":
