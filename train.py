@@ -1,28 +1,20 @@
 import argparse
 import os
-import json
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 import preprocessing.document_processors as processors
-from preprocessing.dataset.dataset_generator import DatasetGenerator, CNNDatasetGenerator
-from model.cnn_model_factory import CNNModelFactory
-from model.lstm_model_factory import LSTMModelFactory
 from model.model_config import ModelConfig, LSTMModelConfig, CNNModelConfig
-from preprocessing.dataset.dataset_params import DatasetParams
 from experiment import Experiment
-
-DOCUMENT_PROCESSOR = processors.default_document_processor
 
 def main():
     args = parse_args()
-    model_configs = create_configs()
+    model_configs = create_configs(args)
     train_experiment = Experiment(args.experiment_dir, model_configs, args.data_dir)
-    train_experiment.run()
+    train_experiment.run(1)
 
-
-def create_configs():
-    lstm_config = LSTMModelConfig("./metadata/config_lstm_test", DOCUMENT_PROCESSOR, LSTMModelFactory())
-    cnn_config = CNNModelConfig("./metadata/config_cnn_test", DOCUMENT_PROCESSOR, CNNModelFactory())
-    return [lstm_config, cnn_config]
-
+def create_configs(args):
+    lstm_config = LSTMModelConfig(os.path.join(args.meta_data_dir, "config_lstm_test"), processors.default_document_processor)
+    cnn_config = CNNModelConfig(os.path.join(args.meta_data_dir, "config_cnn_test"), processors.default_document_processor)
+    return [cnn_config, lstm_config]
 
 def parse_args():
     parser = argparse.ArgumentParser()

@@ -12,13 +12,13 @@ class Experiment:
         self.__model_configs = model_configs
         self.__dataset_dir = dataset_dir
 
-    def run(self):
+    def run(self, num_epochs = 50):
         data_map = self.__get_or_create_data_map(os.path.join(self.__experiment_dir, self.__data_map_filename), self.__dataset_dir)
         train_data_map, test_data_map = self.__get_or_create_train_test_split(data_map)
 
         for model_config in self.__model_configs:
             model_config.load_model(self.__dataset_dir)
-            model_config.train_model(train_data_map.get_data_as_sequence(), test_data_map.get_data_as_sequence(), 20)
+            model_config.train_model(train_data_map.get_data_as_sequence(), test_data_map.get_data_as_sequence(), num_epochs)
     
     def __get_or_create_data_map(self, data_map_path, dataset_dir):
         train_data_map = None

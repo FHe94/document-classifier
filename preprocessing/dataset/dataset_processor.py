@@ -57,7 +57,7 @@ class DatasetProcessor:
         total_max_sequence_length = 0
         for max_sequence_length, dictionary in processing_results:
             result_dict = { **result_dict, **dictionary }
-            max_sequence_length = max(total_max_sequence_length, max_sequence_length)
+            total_max_sequence_length = max(total_max_sequence_length, max_sequence_length)
         result_dict["<unknown>"] = 1
         self.__index_words(result_dict)
         dictionary = Dictionary(result_dict)

@@ -15,13 +15,12 @@ class ModelConfig:
     __dataset_params_filename = "dataset_params.json"
     __model_filename = "model.h5"
 
-    def __init__(self, model_dir, document_processor, dataset_params = None, model_params = None):
+    def __init__(self, model_dir, document_processor, model_params = None):
         self.name = self.__get_model_name(model_dir)
         self._model_dir = model_dir
         self._document_processor = document_processor
         self._model_factory = ModelFactoryBase()
         self._model_params = model_params
-        self._dataset_params = dataset_params
 
     def train_model(self, train_data, validation_data = None, num_epochs = 50):
         print("training model {}".format(self.name))
@@ -35,7 +34,9 @@ class ModelConfig:
         self._model.test(data_generator)
 
     def __get_model_name(self, model_dir):
-        pathsep_index = model_dir.rfind(os.pathsep)
+        pathsep_index = model_dir.rfind(os.path.sep)
+        if pathsep_index == -1:
+            pathsep_index = model_dir.rfind(os.path.altsep)
         pathsep_index = pathsep_index if pathsep_index != -1 else 0
         return model_dir[pathsep_index+1:len(model_dir)]
 
@@ -100,8 +101,8 @@ class ModelConfig:
 
 class LSTMModelConfig(ModelConfig):
 
-    def __init__(self, model_dir, document_processor, dataset_params = None, model_params = None):
-        super().__init__(model_dir, document_processor, dataset_params, model_params)
+    def __init__(self, model_dir, document_processor, model_params = None):
+        super().__init__(model_dir, document_processor, model_params)
         self._model_factory = LSTMModelFactory()
 
     def _create_generator(self, samples, labels, batch_length = 128):
@@ -109,8 +110,8 @@ class LSTMModelConfig(ModelConfig):
     
 class CNNModelConfig(ModelConfig):
 
-    def __init__(self, model_dir, document_processor, dataset_params = None, model_params = None):
-        super().__init__(model_dir, document_processor, dataset_params, model_params)
+    def __init__(self, model_dir, document_processor, model_params = None):
+        super().__init__(model_dir, document_processor, model_params)
         self._model_factory = CNNModelFactory()
 
     def _create_generator(self, samples, labels, batch_length = 128):
