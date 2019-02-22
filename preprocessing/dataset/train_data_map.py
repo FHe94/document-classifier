@@ -1,35 +1,7 @@
 import json
 import os
 import random
-
-class DataMapFactory:
-
-    @staticmethod
-    def create_from_file(path):
-        file_content_json = json.load(open(path, encoding="utf-8"))
-        data_dict = {}
-        for key, value in file_content_json.items():
-            data_dict[key] = TestDataInfo(value["label"], value["index"], value["filenames"], value["path"])
-        return TrainingDataMap(data_dict)
-
-    @staticmethod
-    def create_from_testdata(path, file_extensions = [".txt"], label_extraction_function = None):
-        testdata_dict = {}
-        label_index = 0
-        for objectname in os.listdir(path):
-            label_path = os.path.join(path, objectname)
-            if os.path.isdir(label_path):
-                label = objectname if label_extraction_function is None else label_extraction_function(objectname)
-                test_files = TrainingDataMap.__filter_test_files(os.listdir(label_path), file_extensions)
-                testdata_dict[label] = TestDataInfo(label, label_index, test_files, label_path)
-                label_index += 1
-        return TrainingDataMap(testdata_dict)
-
-    @staticmethod
-    def __filter_test_files(files, extensions):
-        return [ filename for filename in files if os.path.splitext(filename)[1] in extensions ]
-
-
+import utils.utils as utils
 
 class TrainingDataMap:
 
@@ -50,18 +22,30 @@ class TrainingDataMap:
         return samples, labels
 
     def split_data(self, train_samples_per_class = 1000, min_test_samples = 500):
-        total_samples = sum( [ value.num_samples for key, value in self.__data_dict.items() ] )
+        total_samples = self.__get_total_num_samples()
         train_samples = {}
         test_samples = {}
         rest = 0
         for classlabel, classinfo in self.__data_dict.items():
             num_test_samples_for_class = round(min_test_samples * classinfo.num_samples / total_samples + rest)
             rest = min_test_samples * classinfo.num_samples / total_samples - num_test_samples_for_class
-            train_split, test_split = self.__get_train_test_split(classinfo.filenames, train_samples_per_class, num_test_samples_for_class)
-            train_samples[classlabel] = TestDataInfo(classlabel, classinfo.index, train_split, classinfo.path)
-            test_samples[classlabel] = TestDataInfo(classlabel, classinfo.index, test_split, classinfo.path)
+            self.__insert_train_and_test_data(classinfo, (train_samples_per_class, num_test_samples_for_class), train_samples, test_samples)
         return TrainingDataMap(train_samples), TrainingDataMap(test_samples)
             
+    def split_data_evenly(self, test_data_fraction = 0.1):
+        total_samples = self.__get_total_num_samples()
+        train_samples = {}
+        test_samples = {}
+        for classlabel, classinfo in self.__data_dict.items():
+            num_test_samples_for_class = round(test_data_fraction * classinfo.num_samples)
+            num_samples = (classinfo.num_samples - num_test_samples_for_class, num_test_samples_for_class)
+            self.__insert_train_and_test_data(classinfo, num_samples, train_samples, test_samples)
+        return TrainingDataMap(train_samples), TrainingDataMap(test_samples)
+
+    def __insert_train_and_test_data(self, classinfo, num_samples, train_samples, test_samples):
+        train_split, test_split = self.__get_train_test_split(classinfo.filenames, *num_samples)
+        train_samples[classinfo.label] = TestDataInfo(classinfo.label, classinfo.index, train_split, classinfo.path)
+        test_samples[classinfo.label] = TestDataInfo(classinfo.label, classinfo.index, test_split, classinfo.path)
 
     def __get_train_test_split(self, trainfiles, num_train_samples_per_class, num_test_samples_for_class):
         num_samples = len(trainfiles)
@@ -75,7 +59,6 @@ class TrainingDataMap:
             train_split = self.__upsample_train_files(train_split, samples_to_duplicate)
         else:
             train_split = train_split[0:num_train_samples_per_class]
-     
         return train_split, test_split
 
     def __upsample_train_files(self, train_split, samples_to_duplicate):
@@ -88,7 +71,10 @@ class TrainingDataMap:
 
     def save(self, path):
         serializable_map = { key : value.to_serializable() for key, value in self.__data_dict.items() }
-        json.dump(serializable_map, open(path, mode="w", encoding="utf-8"), ensure_ascii=False, indent=4)
+        utils.save_json_file(path, serializable_map)
+
+    def __get_total_num_samples(self):
+        return sum( [ value.num_samples for key, value in self.__data_dict.items() ] )
 
     def __is_file_path(self, path):
         return os.path.splitext(path)[1] != ''

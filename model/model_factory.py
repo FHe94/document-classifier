@@ -10,14 +10,14 @@ class ModelFactoryBase:
         model = self.__create_model(dataset_params, params)
         return DocumentClassifierModel(model)
 
-    def load_model(self, model_dir):
-        model = keras.models.load_model(model_dir, compile=False)
+    def load_model(self, model_path):
+        model = keras.models.load_model(model_path, compile=False)
         return DocumentClassifierModel(model)
 
-    def restore_model(self, path, dataset_params, model_params = None):
+    def restore_model(self, model_path, dataset_params, model_params = None):
         params = self._create_default_model_params() if model_params is None else model_params
         model = self.__create_model(dataset_params, params)
-        model.load_weights(path)
+        model.load_weights(model_path)
         return DocumentClassifierModel(model)
 
     def __create_model(self, dataset_params, model_params):

@@ -1,5 +1,6 @@
 import json
 import multiprocessing.pool
+import os
 
 def split_list(target_list, num_splits):
     num_entries = len(target_list)
@@ -22,3 +23,7 @@ def run_operation_parallel(operation, arg_sets, num_processes=12):
             process_pool.terminate()
         process_pool.join()
     return [ result.get(1) for result in results ]
+
+def save_json_file(path, content):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    json.dump(content, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=4)

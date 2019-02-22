@@ -14,12 +14,6 @@ class DictionaryLoader:
         except Exception as e:
             raise Exception("Couldn't load dictionary: {}".format(e))
 
-    def create_from_textdata(self, data_root_dir, document_processor):
-        return DictionaryCreator(document_processor).create_dictionary(data_root_dir)
-
-    def create_from_datamap(self, data_map, document_processor):
-        return DictionaryCreator(document_processor).create_dictionary_from_data_map(data_map)
-
     def save_dictionary(self, dictionary, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         if self.__is_json_dictionary(path):
@@ -78,60 +72,3 @@ class DictionaryLoader:
 
     def __is_json_dictionary(self, path):
         return os.path.splitext(path)[1] == ".json"
-
-class DictionaryCreator:
-
-    def __init__(self, document_processor, file_extensions = [ ".txt" ]):
-        self.__file_extensions =  file_extensions
-        self.__document_processor = document_processor
-
-    def create_dictionary(self, data_root_dir):
-        print("reading documents...")
-        arg_sets = self.__get_arg_sets_from_directory(data_root_dir)
-        return self.__create_dict(arg_sets)
-    
-    def create_dictionary_from_data_map(self, data_map):
-        print("reading documents...")
-        arg_sets = self.__get_arg_sets_from_data_map(data_map)
-        return self.__create_dict(arg_sets)
-
-    def __create_dict(self, arg_sets):
-        word_dicts = utils.run_operation_parallel(self.process_batch, arg_sets)
-        print("merging dictionaries...")
-        return self.__merge_word_dicts(word_dicts)
-
-    def __get_arg_sets_from_data_map(self, data_map):
-        filepaths, labels = data_map.get_data_as_sequence()
-        return [ (split,) for split in utils.split_list(filepaths, 12) ]
-
-    def __get_arg_sets_from_directory(self, data_root_dir):
-        filepaths = []
-        for rootdir, dirnames, filenames in os.walk(data_root_dir):
-            if filenames:
-                filepaths += [ os.path.join(rootdir, path) for path in self.__filter_valid_files(filenames) ]
-        return [ (split,) for split in utils.split_list(filepaths, 12) ]
-    
-    def __filter_valid_files(self, file_list):
-        return [ filename for filename in file_list if os.path.splitext(filename)[1] in self.__file_extensions ] 
-
-    def __merge_word_dicts(self, dicts):
-        result_dict = {}
-        for current_dict in dicts:
-            result_dict = { **result_dict, **current_dict }
-        result_dict["<unknown>"] = 1
-        self.__index_words(result_dict)
-        return Dictionary(result_dict)
-
-    def __index_words(self, dictionary):
-        index = 0
-        for key in dictionary.keys():
-            dictionary[key] = index
-            index += 1
-
-    def process_batch(self, filepaths):
-        words = {}
-        for filepath in filepaths:
-            tokens = self.__document_processor.process_text_document(filepath)
-            for token in tokens:
-                words[token] = 1
-        return words

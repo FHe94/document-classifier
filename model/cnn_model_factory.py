@@ -24,6 +24,5 @@ class CNNModelFactory(ModelFactoryBase):
         concatenated_filters = keras.layers.Concatenate(axis=-1, name="Concatenate")(filter_outputs)
         return concatenated_filters
 
-
     def _create_default_model_params(self):
         return CNNModelParams(filter_sizes = [3,4,5], num_filters = 178, embedding_size = 128, dropout_rate = 0.5)
