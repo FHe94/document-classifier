@@ -37,6 +37,12 @@ class DocumentClassifierModel:
         print(per_class_accuracies)
         print("Total accuracy: {}".format(total_accuracy))
 
+    def get_input_length(self):
+        input_layer = self.__model.get_layer(index=0)
+        shape = input_layer.input_shape
+        input_length = shape[1]
+        return input_length
+
     def save(self, path):
         self.__model.save(path, overwrite=True)
 
