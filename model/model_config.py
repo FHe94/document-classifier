@@ -4,7 +4,7 @@ import os.path
 from model.model_factory import ModelFactoryBase
 from model.lstm_model_factory import LSTMModelFactory
 from model.cnn_model_factory import CNNModelFactory
-from preprocessing.dataset.dataset_generator import DatasetGenerator, CNNDatasetGenerator
+from preprocessing.dataset.dataset_generator import DatasetGenerator
 from preprocessing.dataset.dataset_params import DatasetParamsLoader
 from preprocessing.dataset.dataset_processor import DatasetProcessor
 from preprocessing.dictionary_operations.dictionary_loader import DictionaryLoader
@@ -15,11 +15,12 @@ class ModelConfig:
     __dataset_params_filename = "dataset_params.json"
     __model_filename = "model.h5"
 
-    def __init__(self, model_dir, document_processor, model_params = None):
+    def __init__(self, model_dir, document_processor, feature_extractor, model_factory = ModelFactoryBase(), model_params = None):
         self.name = self.__get_model_name(model_dir)
         self._model_dir = model_dir
         self._document_processor = document_processor
-        self._model_factory = ModelFactoryBase()
+        self._feature_extractor = feature_extractor
+        self._model_factory = model_factory
         self._model_params = model_params
 
     def train_model(self, train_data, validation_data = None, num_epochs = 50):
@@ -43,11 +44,11 @@ class ModelConfig:
     def load_model(self, dataset_dir = None):
         self.__ensure_model_dir(dataset_dir)
         self._dataset_params, self._dictionary = self.__process_dataset(dataset_dir)
+        self._feature_extractor.prepare(self._dictionary)
         self._model = self.__load_or_create_model()
 
-    @abc.abstractclassmethod
-    def _create_generator(self, samples, labels, batch_length = 128):
-        raise Exception("Not implemented!")
+    def _create_generator(self, samples, labels, batch_size = 128):
+        return DatasetGenerator(samples, labels, batch_size, self._document_processor, self._feature_extractor, self._model.get_input_length())
 
     def __process_dataset(self, dataset_dir):
         dictionary = None
@@ -97,22 +98,3 @@ class ModelConfig:
     def __raise_exception_if_is_default_model_factory(self):
         if not issubclass(self._model_factory.__class__, ModelFactoryBase):
             raise Exception("Cannot create new model with default model factory!")
-
-
-class LSTMModelConfig(ModelConfig):
-
-    def __init__(self, model_dir, document_processor, model_params = None):
-        super().__init__(model_dir, document_processor, model_params)
-        self._model_factory = LSTMModelFactory()
-
-    def _create_generator(self, samples, labels, batch_length = 128):
-        return DatasetGenerator(samples, labels, batch_length, self._dictionary, self._document_processor)
-    
-class CNNModelConfig(ModelConfig):
-
-    def __init__(self, model_dir, document_processor, model_params = None):
-        super().__init__(model_dir, document_processor, model_params)
-        self._model_factory = CNNModelFactory()
-
-    def _create_generator(self, samples, labels, batch_length = 128):
-        return CNNDatasetGenerator(samples, labels, batch_length, self._dataset_params.max_sequence_length, self._dictionary, self._document_processor)

@@ -2,7 +2,10 @@ import argparse
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 import preprocessing.document_processors as processors
-from model.model_config import ModelConfig, LSTMModelConfig, CNNModelConfig
+from preprocessing.dataset.feature_extractor import WordIndicesFeatureExtractor
+from model.lstm_model_factory import LSTMModelFactory
+from model.cnn_model_factory import CNNModelFactory
+from model.model_config import ModelConfig
 from experiment import Experiment
 
 def main():
@@ -12,9 +15,11 @@ def main():
     train_experiment.run(1)
 
 def create_configs(args):
-    lstm_config = LSTMModelConfig(os.path.join(args.meta_data_dir, "config_lstm_test"), processors.default_document_processor)
-    cnn_config = CNNModelConfig(os.path.join(args.meta_data_dir, "config_cnn_test"), processors.default_document_processor)
-    return [cnn_config, lstm_config]
+    lstm_config = ModelConfig(os.path.join(args.meta_data_dir, "config_lstm_test"), processors.default_document_processor,
+     WordIndicesFeatureExtractor(), LSTMModelFactory())
+    cnn_config = ModelConfig(os.path.join(args.meta_data_dir, "config_cnn_test"), processors.default_document_processor,
+     WordIndicesFeatureExtractor(), CNNModelFactory())
+    return [lstm_config, cnn_config]
 
 def parse_args():
     parser = argparse.ArgumentParser()

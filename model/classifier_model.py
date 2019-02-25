@@ -40,8 +40,7 @@ class DocumentClassifierModel:
     def get_input_length(self):
         input_layer = self.__model.get_layer(index=0)
         shape = input_layer.input_shape
-        input_length = shape[1]
-        return input_length
+        return  shape[1]
 
     def save(self, path):
         self.__model.save(path, overwrite=True)
