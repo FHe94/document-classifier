@@ -3,7 +3,7 @@ import numpy as np
 import os.path
 import random
 from tensorflow.keras.utils import Sequence
-from .batch_creator import BatchCreator, CNNBatchCreator
+from .batch_creator import BatchCreator
 
 class DatasetGenerator(Sequence):
 
@@ -35,6 +35,6 @@ class DatasetGenerator(Sequence):
         end_index = min(self.__num_samples, (batch_index + 1) * self.batch_size)
         labels = self.__labels[start_index:end_index]
         batch = self._batch_creator.create_batch(self.__samples[start_index:end_index])
-        return np.array(batch), np.array(labels)
+        return batch, np.array(labels)
 
 

@@ -37,6 +37,9 @@ class DocumentClassifierModel:
         print(per_class_accuracies)
         print("Total accuracy: {}".format(total_accuracy))
 
+    def predict(self, documents):
+        return self.__model.predict(documents)
+
     def get_input_length(self):
         input_layer = self.__model.get_layer(index=0)
         shape = input_layer.input_shape

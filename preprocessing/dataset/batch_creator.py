@@ -1,3 +1,5 @@
+import numpy as np
+
 class BatchCreator():
 
     def __init__(self, document_processor, feature_extractor, input_length):
@@ -10,7 +12,7 @@ class BatchCreator():
         for filepath in file_paths:
             batch.append(self.__prepare_file(filepath))
         self.__pad_samples(batch, self.__get_padding_length(batch))
-        return batch
+        return np.array(batch)
 
     def __get_padding_length(self, batch):
         return self._get_max_sequence_length(batch) if self.__input_length is None else self.__input_length
@@ -34,12 +36,3 @@ class BatchCreator():
     def __prepare_file(self, path):
         words = self.__document_processor.process_text_document(path)
         return self.__feature_extractor.extract_features(words)
-
-class CNNBatchCreator(BatchCreator):
-
-    def __init__(self, dictionary, document_processor, max_sequence_length):
-        super().__init__(dictionary, document_processor)
-        self.__max_sequence_length = max_sequence_length
-
-    def _get_max_sequence_length(self, batch):
-        return self.__max_sequence_length

@@ -5,6 +5,7 @@ from model.model_factory import ModelFactoryBase
 from model.lstm_model_factory import LSTMModelFactory
 from model.cnn_model_factory import CNNModelFactory
 from preprocessing.dataset.dataset_generator import DatasetGenerator
+from preprocessing.dataset.batch_creator import BatchCreator
 from preprocessing.dataset.dataset_params import DatasetParamsLoader
 from preprocessing.dataset.dataset_processor import DatasetProcessor
 from preprocessing.dictionary_operations.dictionary_loader import DictionaryLoader
@@ -33,6 +34,12 @@ class ModelConfig:
         print("testing model {}".format(self.name))
         data_generator = self._create_generator(*test_data)
         self._model.test(data_generator)
+
+    def predict(self, document_filepaths):
+        batch_creator = BatchCreator(self._document_processor, self._feature_extractor, self._model.get_input_length())
+        features = batch_creator.create_batch(document_filepaths)
+        predictions = self._model.predict(features)
+        return predictions
 
     def __get_model_name(self, model_dir):
         pathsep_index = model_dir.rfind(os.path.sep)
@@ -82,7 +89,7 @@ class ModelConfig:
         except Exception as e:
             print("Unable to load model. Trying to restore...")
             self.__raise_exception_if_no_dataset_params()
-            return self._model_factory.restore(model_path, self._dataset_params, self._model_params)
+            return self._model_factory.restore_model(model_path, self._dataset_params, self._model_params)
 
     def __ensure_model_dir(self, dataset_dir):
         if not os.path.exists(self._model_dir):
