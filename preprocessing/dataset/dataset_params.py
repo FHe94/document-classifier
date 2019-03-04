@@ -11,7 +11,7 @@ class DatasetParamsLoader():
 
     def load_dataset_params(self, path):
         dataset_dict = json.load(open(path, encoding = "utf-8"), encoding="utf-8")
-        return DatasetParams(dataset_dict["dictionary_length"], dataset_dict["num_classes"], dataset_dict["max_sequence_length"])
+        return DatasetParams(dataset_dict.get("dictionary_length", None), dataset_dict.get("num_classes", None), dataset_dict.get("max_sequence_length", None))
 
     def save_dataset_params(self, dataset_params, path):
         utils.save_json_file(path, dataset_params.__dict__)

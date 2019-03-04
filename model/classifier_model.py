@@ -2,6 +2,7 @@ import math
 import sklearn.metrics
 import numpy as np
 from tensorflow import keras
+from .test_result import TestResult
 
 
 class DocumentClassifierModel:
@@ -20,8 +21,7 @@ class DocumentClassifierModel:
                                    callbacks=callbacks, validation_data=test_data_generator)
 
     def test(self, dataset_generator):
-        self.__model.compile(optimizer=keras.optimizers.Adadelta(),
-         loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+        self.__model.compile(optimizer=keras.optimizers.Adadelta(),loss='sparse_categorical_crossentropy', metrics=['accuracy'])
         per_class_correct = np.zeros(self.__num_classes)
         per_class_total = np.zeros(self.__num_classes)
         for i in range(len(dataset_generator)):
@@ -32,10 +32,8 @@ class DocumentClassifierModel:
                 if np.argmax(prediction) == true_label:
                     per_class_correct[true_label] += 1
         per_class_accuracies = np.around(per_class_correct / per_class_total, 3)
-        total_accuracy =  np.sum(per_class_correct) / np.sum(per_class_total)
-        print("Per-class accuracies: ")  
-        print(per_class_accuracies)
-        print("Total accuracy: {}".format(total_accuracy))
+        total_accuracy =  np.around(np.sum(per_class_correct) / np.sum(per_class_total), 5)
+        return TestResult(total_accuracy, per_class_accuracies)
 
     def predict(self, documents):
         return self.__model.predict(documents)

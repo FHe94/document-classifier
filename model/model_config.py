@@ -31,7 +31,7 @@ class ModelConfig:
 
     def test_model(self, test_data):
         data_generator = self._create_generator(*test_data)
-        self._model.test(data_generator)
+        return self._model.test(data_generator)
 
     def predict(self, document_filepaths):
         batch_creator = BatchCreator(self._document_processor, self._feature_extractor, self._model.get_input_length())

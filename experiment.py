@@ -9,7 +9,6 @@ class Experiment:
     __validation_data_map_filename = "validation_data_map.json"
     __test_data_map_filename = "test_data_map.json"
 
-
     def __init__(self, experiment_dir, model_configs, dataset_dir):
         self.__experiment_dir = experiment_dir
         self.__model_configs = model_configs
@@ -18,10 +17,11 @@ class Experiment:
     def run(self, num_epochs = 50):
         data_map = self.__get_or_create_data_map(os.path.join(self.__experiment_dir, self.__data_map_filename), self.__dataset_dir)
         train_data_map, validation_data_map, test_data_map = self.__get_or_create_train_test_validation_split(data_map)
+        test_results = []
         for model_config in self.__model_configs:
             model_config.load_model_from_data_map(train_data_map)
             self.__train_model(model_config, train_data_map, validation_data_map, num_epochs)
-            self.__test_model(model_config, test_data_map)
+            test_results.append(self.__test_model(model_config, test_data_map))
 
     def __train_model(self, model_config, train_data_map, validation_data_map, num_epochs):
         print("Training model {}".format(model_config.name))
@@ -31,7 +31,12 @@ class Experiment:
 
     def __test_model(self, model_config, test_data_map):
         print("Testing model {}".format(model_config.name))
-        model_config.test_model(test_data_map.get_data_as_sequence())
+        test_result = model_config.test_model(test_data_map.get_data_as_sequence())
+        print("Total accuracy: {}".format(test_result.accuracy))
+        print("Per-class accuracies: ")
+        print(test_result.per_class_accuracies)
+        return test_result
+
 
     def __get_or_create_data_map(self, data_map_path, dataset_dir):
         train_data_map = None
