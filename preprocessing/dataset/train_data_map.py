@@ -21,7 +21,7 @@ class TrainingDataMap:
                 labels.append(classinfo.index)
         return samples, labels
 
-    def split_data(self, train_samples_per_class = 1000, min_test_samples = 500):
+    def split_data_with_upsampling(self, train_samples_per_class = 1000, min_test_samples = 500):
         total_samples = self.__get_total_num_samples()
         train_samples = {}
         test_samples = {}
@@ -32,7 +32,7 @@ class TrainingDataMap:
             self.__insert_train_and_test_data(classinfo, (train_samples_per_class, num_test_samples_for_class), train_samples, test_samples)
         return TrainingDataMap(train_samples), TrainingDataMap(test_samples)
             
-    def split_data_evenly(self, test_data_fraction = 0.1):
+    def split_data(self, test_data_fraction = 0.1):
         total_samples = self.__get_total_num_samples()
         train_samples = {}
         test_samples = {}
@@ -41,6 +41,15 @@ class TrainingDataMap:
             num_samples = (classinfo.num_samples - num_test_samples_for_class, num_test_samples_for_class)
             self.__insert_train_and_test_data(classinfo, num_samples, train_samples, test_samples)
         return TrainingDataMap(train_samples), TrainingDataMap(test_samples)
+
+    def split_data_n_parts(self, num_parts = 4):
+        total_samples = self.__get_total_num_samples()
+        splits = [{}] * num_parts
+        for classlabel, classinfo in self.__data_dict.items():
+            splits_per_class = utils.split_list(classinfo.filenames, num_parts)
+            for i in range(len(splits_per_class)):
+                splits[i][classlabel] = TestDataInfo(classinfo.label, classinfo.index, splits_per_class[i], classinfo.path)
+        return [ TrainingDataMap(split) for split in splits ]
 
     def __insert_train_and_test_data(self, classinfo, num_samples, train_samples, test_samples):
         train_split, test_split = self.__get_train_test_split(classinfo.filenames, *num_samples)
@@ -116,5 +125,3 @@ class TestDataInfo:
     
     def to_serializable(self):
         return self.__dict__
-
-    

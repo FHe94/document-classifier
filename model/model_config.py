@@ -25,13 +25,11 @@ class ModelConfig:
         self._model_params = model_params
 
     def train_model(self, train_data, validation_data = None, num_epochs = 50):
-        print("training model {}".format(self.name))
         train_data_generator = self._create_generator(*train_data)
         validation_data_generator = self._create_generator(*validation_data, 64) if validation_data is not None else None
         self._model.train(train_data_generator, num_epochs, os.path.join(self._model_dir, self.__model_filename), validation_data_generator)
 
     def test_model(self, test_data):
-        print("testing model {}".format(self.name))
         data_generator = self._create_generator(*test_data)
         self._model.test(data_generator)
 
@@ -48,27 +46,32 @@ class ModelConfig:
         pathsep_index = pathsep_index if pathsep_index != -1 else 0
         return model_dir[pathsep_index+1:len(model_dir)]
 
-    def load_model(self, dataset_dir = None):
+    def load_model_from_data_map(self, data_map = None):
+        self.__ensure_model_dir(data_map)
+        dataset_processing_function = lambda : DatasetProcessor(self._document_processor).process_dataset_from_data_map(data_map)
+        self._dataset_params, self._dictionary = self.__load_or_create_dataset_info(dataset_processing_function)
+        self._feature_extractor.prepare(self._dictionary)
+        self._model = self.__load_or_create_model()
+    
+    def load_model_from_dataset(self, dataset_dir = None):
         self.__ensure_model_dir(dataset_dir)
-        self._dataset_params, self._dictionary = self.__process_dataset(dataset_dir)
+        dataset_processing_function = lambda : DatasetProcessor(self._document_processor).process_dataset_from_directory(dataset_dir)
+        self._dataset_params, self._dictionary = self.__load_or_create_dataset_info(dataset_dir)
         self._feature_extractor.prepare(self._dictionary)
         self._model = self.__load_or_create_model()
 
     def _create_generator(self, samples, labels, batch_size = 128):
         return DatasetGenerator(samples, labels, batch_size, self._document_processor, self._feature_extractor, self._model.get_input_length())
 
-    def __process_dataset(self, dataset_dir):
-        dictionary = None
+    def __load_or_create_dataset_info(self, dataset_processing_function):
         dict_path = os.path.join(self._model_dir, self.__dictionary_file_name)
         dataset_params_path = os.path.join(self._model_dir, self.__dataset_params_filename)
         if os.path.isfile(dict_path) and os.path.isfile(dataset_params_path):
             print("Loading information from from files...")
-            dataset_params = DatasetParamsLoader().load_dataset_params(dataset_params_path)
-            dictionary = DictionaryLoader().load_dictionary(dict_path)
-            return dataset_params, dictionary
+            return DatasetParamsLoader().load_dataset_params(dataset_params_path), DictionaryLoader().load_dictionary(dict_path)
         else:
             print("No files found. Creating from dataset...")
-            dataset_params, dictionary = DatasetProcessor(self._document_processor).process_dataset_from_directory(dataset_dir)
+            dataset_params, dictionary = dataset_processing_function()
             DatasetParamsLoader().save_dataset_params(dataset_params, dataset_params_path)
             DictionaryLoader().save_dictionary(dictionary, dict_path)
             return dataset_params, dictionary
@@ -91,9 +94,9 @@ class ModelConfig:
             self.__raise_exception_if_no_dataset_params()
             return self._model_factory.restore_model(model_path, self._dataset_params, self._model_params)
 
-    def __ensure_model_dir(self, dataset_dir):
+    def __ensure_model_dir(self, training_data):
         if not os.path.exists(self._model_dir):
-            if dataset_dir is None:
+            if training_data is None:
                 raise Exception("Model does not exist and no dataset was provided to create it!")
             else:
                 os.makedirs(self._model_dir, exist_ok=True)

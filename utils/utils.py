@@ -2,14 +2,24 @@ import json
 import multiprocessing.pool
 import os
 
+def split_number_into_integers(number, num_integers):
+    division_float = float(number) / num_integers
+    integers = []
+    rest = 0
+    for i in range(num_integers):
+        integer = round(division_float + rest)
+        rest = division_float + rest - integer
+        integers.append(integer)
+    return integers
+
 def split_list(target_list, num_splits):
-    num_entries = len(target_list)
-    entries_per_split = int(num_entries/num_splits)
     splits = []
-    for i in range(num_splits):
-        startindex = i*entries_per_split
-        endindex = (i+1)*entries_per_split if i < num_splits - 1 else num_entries
+    startindex = 0
+    num_elements = split_number_into_integers(len(target_list), num_splits)
+    for num_elements_per_split in num_elements:
+        endindex = startindex + num_elements_per_split
         splits.append(target_list[startindex:endindex])
+        startindex=endindex
     return splits
 
 def run_operation_parallel(operation, arg_sets, num_processes=12):
