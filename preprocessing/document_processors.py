@@ -9,3 +9,7 @@ default_document_processor = DocumentProcessor([
 default_with_dictionary_lookup = DocumentProcessor([
     ps.Normalize(), ps.FilterTokens(), ps.WordPlaceholders(), 
     ps.DictionaryLookup(DictionaryLoader().load_dictionary("./preprocessing/processing_steps/german_dict.json")), ps.Stemming() ])
+
+cnn_default_processor = DocumentProcessor([
+    ps.FilterTokens(r"[(),!?\'\`-]"), ps.Stemming()
+])
