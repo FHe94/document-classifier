@@ -8,6 +8,7 @@ class Experiment:
     __train_data_map_filename = "train_data_map.json"
     __validation_data_map_filename = "validation_data_map.json"
     __test_data_map_filename = "test_data_map.json"
+    __results_filename = "results.txt"
 
     def __init__(self, experiment_dir, model_configs, dataset_dir):
         self.__experiment_dir = experiment_dir
@@ -22,6 +23,8 @@ class Experiment:
             model_config.load_model_from_data_map(train_data_map)
             self.__train_model(model_config, train_data_map, validation_data_map, num_epochs)
             test_results.append(self.__test_model(model_config, test_data_map))
+        self.__print_results(test_results, data_map.get_labels())
+        self.__save_results(os.path.join(self.__experiment_dir, self.__results_filename), test_results, "text")
 
     def __train_model(self, model_config, train_data_map, validation_data_map, num_epochs):
         print("Training model {}".format(model_config.name))
@@ -37,6 +40,22 @@ class Experiment:
         print(test_result.per_class_accuracies)
         return test_result
 
+    def __print_results(self, test_results, labels):
+        print("All models trained successfully")
+        for result in test_results:
+            result.labels = labels
+            print(str(result))
+
+    def __save_results(self, path, test_results, output_format="text"):
+        print("Saving results to \"{}\"".format(path))
+        with open(path, mode="w", encoding="utf-8") as out_file:
+            if output_format == "text":
+                self.__save_results_as_text(out_file, test_results)
+
+    def __save_results_as_text(self, out_file, test_results):
+        for result in test_results:
+            out_file.write(str(result))
+            out_file.write("-"*50)
 
     def __get_or_create_data_map(self, data_map_path, dataset_dir):
         train_data_map = None

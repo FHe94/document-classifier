@@ -12,6 +12,12 @@ class TrainingDataMap:
     def get_num_classes(self):
         return self.__num_classes
 
+    def get_labels(self):
+        out_labels = [""] * self.get_num_classes()
+        for classname, classinfo in self.__data_dict.item():
+            out_labels[classinfo.index] = classinfo.label
+        return out_labels
+
     def get_data_as_sequence(self):
         samples = []
         labels = []

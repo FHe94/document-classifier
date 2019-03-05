@@ -31,7 +31,9 @@ class ModelConfig:
 
     def test_model(self, test_data):
         data_generator = self._create_generator(*test_data)
-        return self._model.test(data_generator)
+        test_result = self._model.test(data_generator)
+        test_result.model_name = self.name
+        return test_result
 
     def predict(self, document_filepaths):
         batch_creator = BatchCreator(self._document_processor, self._feature_extractor, self._model.get_input_length())
@@ -56,7 +58,7 @@ class ModelConfig:
     def load_model_from_dataset(self, dataset_dir = None):
         self.__ensure_model_dir(dataset_dir)
         dataset_processing_function = lambda : DatasetProcessor(self._document_processor).process_dataset_from_directory(dataset_dir)
-        self._dataset_params, self._dictionary = self.__load_or_create_dataset_info(dataset_dir)
+        self._dataset_params, self._dictionary = self.__load_or_create_dataset_info(dataset_processing_function)
         self._feature_extractor.prepare(self._dictionary)
         self._model = self.__load_or_create_model()
 
