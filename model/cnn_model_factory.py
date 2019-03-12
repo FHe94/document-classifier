@@ -4,7 +4,8 @@ from .model_parameters import CNNModelParams
 
 class CNNModelFactory(ModelFactoryBase):
 
-    def _create_model_gpu(self, dataset_params, model_params):
+
+    def __create_model(self, dataset_params, model_params):
         inputs = keras.layers.Input(shape=(dataset_params.max_sequence_length,), name="CNN_Inputs")
         embedding = keras.layers.Embedding(dataset_params.dictionary_length, model_params.embedding_size, name="Embedding")(inputs)
         embedding_expanded = keras.layers.Reshape(target_shape=(dataset_params.max_sequence_length, model_params.embedding_size, 1))(embedding)
@@ -25,6 +26,12 @@ class CNNModelFactory(ModelFactoryBase):
             filter_outputs.append(filter_output)
         concatenated_filters = keras.layers.Concatenate(axis=-1, name="Concatenate")(filter_outputs)
         return concatenated_filters
+
+    def _create_model_cpu(self, dataset_params, model_params):
+        return self.__create_model(dataset_params, model_params)
+
+    def _create_model_gpu(self, dataset_params, model_params):
+        return self.__create_model(dataset_params, model_params)
 
     def _create_default_model_params(self):
         return CNNModelParams(filter_sizes = [3,4,5], num_filters = 178, embedding_size = 128, dropout_rate = 0.5)
