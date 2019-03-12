@@ -1,6 +1,5 @@
 import json
 import os.path
-import Levenshtein
 from nltk.tokenize import word_tokenize
 import preprocessing.document_processor
 from .dictionary import Dictionary
