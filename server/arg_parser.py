@@ -1,13 +1,16 @@
 import json
 
-class ClassificationArgs:
+class ClassificationServerCommand:
 
-    def __init__(self, to_classify_url, expected_output):
-        self.to_classify_url = to_classify_url
-        self.expected_output = expected_output
+    def __init__(self, command, commandArgs):
+        self.command = command
+        self.args = commandArgs
+
+    def to_json_string(self):
+        return json.dumps(self.__dict__, ensure_ascii=False)
 
 class ClassificationArgsParser:
 
     def parse_args(self, args_string):
         raw_obj = json.loads(args_string, encoding="utf-8")
-        return ClassificationArgs(raw_obj["to_classify_url_str"], raw_obj["expected_output"])
+        return ClassificationServerCommand(raw_obj["command"], raw_obj.get("args", dict()))
