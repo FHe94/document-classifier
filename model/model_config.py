@@ -18,7 +18,7 @@ class ModelConfig:
 
     def __init__(self, model_dir, document_processor, feature_extractor, model_factory = ModelFactoryBase(), model_params = None):
         self.name = self.__get_model_name(model_dir)
-        self._model_dir = model_dir
+        self.model_dir = model_dir
         self._document_processor = document_processor
         self._feature_extractor = feature_extractor
         self._model_factory = model_factory
@@ -27,7 +27,7 @@ class ModelConfig:
     def train_model(self, train_data, validation_data = None, num_epochs = 50):
         train_data_generator = self._create_generator(*train_data)
         validation_data_generator = self._create_generator(*validation_data, 64) if validation_data is not None else None
-        self._model.train(train_data_generator, num_epochs, os.path.join(self._model_dir, self.__model_filename), validation_data_generator)
+        self._model.train(train_data_generator, num_epochs, os.path.join(self.model_dir, self.__model_filename), validation_data_generator)
 
     def test_model(self, test_data):
         data_generator = self._create_generator(*test_data)
@@ -67,8 +67,8 @@ class ModelConfig:
         return DatasetGenerator(samples, labels, batch_size, self._document_processor, self._feature_extractor, self._model.get_input_length())
 
     def __load_or_create_dataset_info(self, dataset_processing_function):
-        dict_path = os.path.join(self._model_dir, self.__dictionary_file_name)
-        dataset_params_path = os.path.join(self._model_dir, self.__dataset_params_filename)
+        dict_path = os.path.join(self.model_dir, self.__dictionary_file_name)
+        dataset_params_path = os.path.join(self.model_dir, self.__dataset_params_filename)
         if os.path.isfile(dict_path) and os.path.isfile(dataset_params_path):
             print("Loading information from from files...")
             return DatasetParamsLoader().load_dataset_params(dataset_params_path), DictionaryLoader().load_dictionary(dict_path)
@@ -80,7 +80,7 @@ class ModelConfig:
             return dataset_params, dictionary
 
     def __load_or_create_model(self):
-        model_path = os.path.join(self._model_dir, self.__model_filename)
+        model_path = os.path.join(self.model_dir, self.__model_filename)
         if os.path.isfile(model_path):
             return self.__try_load_model(model_path)
         else:
@@ -98,11 +98,11 @@ class ModelConfig:
             return self._model_factory.restore_model(model_path, self._dataset_params, self._model_params)
 
     def __ensure_model_dir(self, training_data):
-        if not os.path.exists(self._model_dir):
+        if not os.path.exists(self.model_dir):
             if training_data is None:
                 raise Exception("Model does not exist and no dataset was provided to create it!")
             else:
-                os.makedirs(self._model_dir, exist_ok=True)
+                os.makedirs(self.model_dir, exist_ok=True)
 
     def __raise_exception_if_no_dataset_params(self):
         if self._dataset_params is None:
