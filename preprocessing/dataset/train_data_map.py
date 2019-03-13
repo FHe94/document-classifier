@@ -14,7 +14,7 @@ class TrainingDataMap:
 
     def get_labels(self):
         out_labels = [""] * self.get_num_classes()
-        for classname, classinfo in self.__data_dict.item():
+        for classname, classinfo in self.__data_dict.items():
             out_labels[classinfo.index] = classinfo.label
         return out_labels
 

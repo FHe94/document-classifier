@@ -36,8 +36,9 @@ class ModelConfig:
         return test_result
 
     def predict(self, document_filepaths):
+        document_filepath_list = [ document_filepaths ] if type(document_filepaths) is str else document_filepaths
         batch_creator = BatchCreator(self._document_processor, self._feature_extractor, self._model.get_input_length())
-        features = batch_creator.create_batch(document_filepaths)
+        features = batch_creator.create_batch(document_filepath_list)
         predictions = self._model.predict(features)
         return predictions
 
