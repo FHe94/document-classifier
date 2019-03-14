@@ -9,6 +9,7 @@ class DocumentClassifierModel:
 
     def __init__(self, model):
         self.__model = model
+        self.__model._make_predict_function()
         self.__num_classes = model.get_layer(name="Classifier_Output").output_shape[1]
 
     def train(self, train_data_generator, epochs, checkpoint_path=[], test_data_generator=None):

@@ -27,9 +27,12 @@ class ClassificationServer(socketserver.ThreadingTCPServer):
 
     def __load_classifier_model(self):
         print("loading model")
-        self.graph = tf.get_default_graph()
+        self.session = tf.Session()
+        tf.keras.backend.set_session(self.session)
         self.classifier_model = ModelConfig(MODEL_DIRECTORY, processor, feature_extractor, factory)
         self.classifier_model.load_model_from_data_map()
+        self.graph = tf.get_default_graph()
+        self.graph.finalize()
         print("model {} loaded".format(self.classifier_model.name))
 
 class ClassificationRequestHandler(socketserver.BaseRequestHandler):
@@ -70,13 +73,14 @@ class ClassificationRequestHandler(socketserver.BaseRequestHandler):
         return command_function(classification_args.args)
 
     def __predict(self, args):
-        with self.server.graph.as_default():
-            print("predicting")
-            to_classify = args["to_classify"]
-            top_n = self.__parse_expected_output(args.get("expected_output"))
-            raw_predictions = self.server.classifier_model.predict([to_classify])
-            prediction_results = self.__process_prediction_result(raw_predictions, top_n)
-            return prediction_results
+        with self.server.session.as_default():
+            with self.server.graph.as_default():
+                print("predicting")
+                to_classify = args["to_classify"]
+                top_n = self.__parse_expected_output(args.get("expected_output"))
+                raw_predictions = self.server.classifier_model.predict([to_classify])
+                prediction_results = self.__process_prediction_result(raw_predictions, top_n)
+                return prediction_results
 
     def __parse_expected_output(self, expected_output):
         regex = re.match(r"top-(\d{1,2})", expected_output)
