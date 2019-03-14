@@ -1,18 +1,18 @@
 import socket
+import multiprocessing
+import run_classification_server
 from .message_utils import MessageUtils
 from .arg_parser import ClassificationServerCommand
 
 class ClassificationClient:
 
-    def __init__(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    def connect(self, hostname, port):
-        self.socket.connect((hostname, port))
+    def connect(self, hostname, port, timeout=20):
+        self.socket = socket.create_connection((hostname, port), timeout)
 
     def disconnect(self):
-        self.socket.shutdown(socket.SHUT_RDWR)
-        self.socket.close()
+        if hasattr(self, "socket"):
+            self.socket.shutdown(socket.SHUT_RDWR)
+            self.socket.close()
 
     def predict(self, document_path, expected_output = "top-1"):
         args = { "to_classify": document_path, "expected_output": expected_output }
@@ -20,6 +20,10 @@ class ClassificationClient:
 
     def shutdown_server(self):
         return self.send_command("shutdown", None)
+
+    def start_server(self):
+        process = multiprocessing.Process(target = run_classification_server.start_server)
+        process.start()
 
     def send_command(self, command_name, command_args):
         command = ClassificationServerCommand(command_name, command_args)
