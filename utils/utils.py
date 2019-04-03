@@ -37,3 +37,12 @@ def run_operation_parallel(operation, arg_sets, num_processes=12):
 def save_json_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     json.dump(content, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=4)
+
+def read_json_file(path):
+    with open(path, encoding = "utf-8") as json_file:
+        return json.load(json_file, encoding="utf-8")
+
+def get_resource_by_condition(scope, condition):
+    for name, attribute in scope.items():
+        if condition(name, attribute):
+            return attribute

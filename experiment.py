@@ -1,6 +1,7 @@
 import os
 import utils.utils as utils
 import random
+from classifier.loading.model_creator import ModelCreator
 from preprocessing.dataset.train_data_map import TrainingDataMap
 from utils.memory_profiler import MemoryProfiler
 
@@ -12,22 +13,30 @@ class Experiment:
     __test_data_map_filename = "test_data_map.json"
     __results_filename = "results.txt"
 
-    def __init__(self, experiment_dir, model_configs, dataset_dir):
+    def __init__(self, experiment_dir, training_config):
         self.__experiment_dir = experiment_dir
-        self.__model_configs = model_configs
-        self.__dataset_dir = dataset_dir
+        self.__training_config = training_config
 
-    def run_train(self, num_epochs = 50):
-        data_map = self.__get_or_create_data_map(os.path.join(self.__experiment_dir, self.__data_map_filename), self.__dataset_dir)
+    def run_train(self):
+        os.makedirs(self.__experiment_dir, exist_ok=True)
+        data_map = self.__get_or_create_data_map(os.path.join(self.__experiment_dir, self.__data_map_filename), self.__training_config.dataset_dir)
         train_data_map, validation_data_map, test_data_map = self.__get_or_create_train_test_validation_split(data_map)
         test_results = []
         samples_for_memory_usage_test = self.__get_samples_for_memory_usage_test(test_data_map, 1)
-        for model_config in self.__model_configs:
-            model_config.load_model_from_data_map(train_data_map)
-            self.__train_model(model_config, train_data_map, validation_data_map, num_epochs)
-            test_results.append(self.__test_model(model_config, test_data_map, samples_for_memory_usage_test))
+        models = self.__load_models(train_data_map)
+        for model in models:
+            self.__train_model(model, train_data_map, validation_data_map, self.__training_config.num_epochs)
+            test_results.append(self.__test_model(model, test_data_map, samples_for_memory_usage_test))
         self.__print_results(test_results, data_map.get_labels())
         self.__save_results(os.path.join(self.__experiment_dir, self.__results_filename), test_results, "text")
+
+    def __load_models(self, training_data_map):
+        model_creator = ModelCreator()
+        models = []
+        for model_config in self.__training_config.models:
+            model_dir = self.__get_model_dir(model_config.name)
+            models.append(model_creator.create_model(model_config, training_data_map, model_dir))
+        return models
 
     def run_test(self):
         data_map = self.__get_or_create_data_map(os.path.join(self.__experiment_dir, self.__data_map_filename), self.__dataset_dir)
@@ -40,21 +49,22 @@ class Experiment:
         self.__print_results(test_results, data_map.get_labels())
         self.__save_results(os.path.join(self.__experiment_dir, self.__results_filename), test_results, "text")
 
-    def __train_model(self, model_config, train_data_map, validation_data_map, num_epochs):
-        print("Training model {}".format(model_config.name))
+    def __train_model(self, model, train_data_map, validation_data_map, num_epochs):
+        print("Training model {}".format(model.name))
         train_data = train_data_map.get_data_as_sequence()
         validation_data = validation_data_map.get_data_as_sequence()
-        model_config.train_model(train_data, validation_data, num_epochs)
+        save_path = os.path.join(self.__experiment_dir, "models", model.name, "model.h5")
+        model.train_model(train_data, save_path, validation_data, num_epochs)
 
-    def __test_model(self, model_config, test_data_map, samples_for_memory_usage_test):
-        print("Testing model {}".format(model_config.name))
-        test_result = model_config.test_model(test_data_map.get_data_as_sequence())
+    def __test_model(self, model, test_data_map, samples_for_memory_usage_test):
+        print("Testing model {}".format(model.name))
+        test_result = model.test_model(test_data_map.get_data_as_sequence())
         print("Total accuracy: {}".format(test_result.accuracy))
         print("Per-class accuracies: ")
         print(test_result.per_class_accuracies)
         print("Measuring memory usage")
-        model_config.predict(samples_for_memory_usage_test)
-        peak_memory_usage = self.__get_pretty_printed_memory_usage(self.__test_memory_usage_for_predict(model_config, samples_for_memory_usage_test))
+        model.predict(samples_for_memory_usage_test)
+        peak_memory_usage = self.__get_pretty_printed_memory_usage(self.__test_memory_usage_for_predict(model, samples_for_memory_usage_test))
         print(peak_memory_usage)
         test_result.peak_memory_usage = peak_memory_usage
         return test_result
@@ -71,10 +81,11 @@ class Experiment:
         return "{} {}".format(round(value, 4), unit)
 
 
-    def __test_memory_usage_for_predict(self, model_config, samples):
+    def __test_memory_usage_for_predict(self, model, samples):
         profiler = MemoryProfiler()
         memory_usages = []
-        base_args = [ "python3", "predict.py", model_config.model_dir ]
+        config_path = os.path.join(self.__get_model_dir(model.name), "{}_config.json".format(model.name))
+        base_args = [ "python3", "predict.py", config_path ]
         for i in range(len(samples)):
             print("Measuring {}/{}".format(i+1, len(samples)))
             args = base_args + [ samples[i] ]
@@ -137,12 +148,14 @@ class Experiment:
 
     def _get_label_from_dirname(dirname):
         dir_parts = dirname.split()
-        return " ".join(dir_parts[2:len(dir_parts)])
+        if len(dir_parts) > 2:
+            return " ".join(dir_parts[2:len(dir_parts)])
+        else:
+            return dirname
 
     def __get_samples_for_memory_usage_test(self, test_data_map, num_samples):
         samples, labels = test_data_map.get_data_as_sequence()
         return random.sample(samples, min(num_samples, len(samples)))
 
-    def __ensure_datset_dir(self):
-        if not os.path.exists(self.__experiment_dir):
-            os.makedirs(self.__experiment_dir, exist_ok=True)
+    def __get_model_dir(self, model_name):
+        return os.path.join(self.__experiment_dir, "models", model_name)

@@ -4,7 +4,6 @@ from .model_parameters import CNNModelParams
 
 class CNNModelFactory(ModelFactoryBase):
 
-
     def __create_model(self, dataset_params, model_params):
         inputs = keras.layers.Input(shape=(dataset_params.max_sequence_length,), name="CNN_Inputs")
         embedding = keras.layers.Embedding(dataset_params.dictionary_length, model_params.embedding_size, name="Embedding")(inputs)

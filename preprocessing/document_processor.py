@@ -6,7 +6,8 @@ from .ocr.ocr_engine import TesseractOcrEngine
 
 class DocumentProcessor:
 
-    def __init__(self, processing_steps):
+    def __init__(self, name, processing_steps):
+        self.name = name
         self.__processing_steps = processing_steps
         self.__ocr_engine = TesseractOcrEngine()
 

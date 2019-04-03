@@ -96,7 +96,7 @@ class TrainingDataMap:
 
     @staticmethod
     def create_from_file(path):
-        file_content_json = json.load(open(path, encoding="utf-8"))
+        file_content_json = utils.read_json_file(path)
         data_dict = {}
         for key, value in file_content_json.items():
             data_dict[key] = TestDataInfo(value["label"], value["index"], value["filenames"], value["path"])

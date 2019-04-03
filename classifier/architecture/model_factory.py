@@ -1,12 +1,12 @@
 import abc
 from tensorflow import keras
 from tensorflow.python.client import device_lib
-from .classifier_model import DocumentClassifierModel
+from ..model.classifier_model import DocumentClassifierModel
 
 class ModelFactoryBase:
 
     def create_new_model(self, dataset_params, model_params = None):
-        params = self._create_default_model_params() if model_params is None else model_params
+        params = self.__merge_model_params(model_params)
         model = self.__create_model(dataset_params, params)
         return DocumentClassifierModel(model)
 
@@ -15,7 +15,7 @@ class ModelFactoryBase:
         return DocumentClassifierModel(model)
 
     def restore_model(self, model_path, dataset_params, model_params = None):
-        params = self._create_default_model_params() if model_params is None else model_params
+        params = self.__merge_model_params(model_params)
         model = self.__create_model(dataset_params, params)
         model.load_weights(model_path)
         return DocumentClassifierModel(model)
@@ -30,6 +30,13 @@ class ModelFactoryBase:
                 return True
         return False
 
+    def __merge_model_params(self, model_params):
+        out_params = self._create_default_model_params()
+        if model_params is not None:
+            for name, value in model_params.items():
+                setattr(out_params, name, value)
+        return out_params
+
     @abc.abstractclassmethod
     def _create_model_gpu(self, dataset_params, model_params):
         raise Exception("Method not implemented")
@@ -37,6 +44,7 @@ class ModelFactoryBase:
     @abc.abstractclassmethod
     def _create_model_cpu(self, dataset_params, model_params):
         raise Exception("Method not implemented")
+
 
     @abc.abstractclassmethod
     def _create_default_model_params(self):

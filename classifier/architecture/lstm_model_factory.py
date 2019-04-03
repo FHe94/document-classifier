@@ -1,7 +1,7 @@
 from tensorflow import keras
 from .model_factory import ModelFactoryBase
 from .model_parameters import LSTMModelParams
-from .layers.sum_timesteps import sum_timesteps
+from ..layers.sum_timesteps import sum_timesteps
 
 class LSTMModelFactory(ModelFactoryBase):
 
