@@ -1,33 +1,26 @@
+import abc
+import os
 import math
 import sklearn.metrics
 import numpy as np
+import sklearn as sk
 from tensorflow import keras
 from .test_result import TestResult
+import pickle
+import utils.utils as utils
 
-
-class DocumentClassifierModel:
+class ClassifierBase:
 
     def __init__(self, model):
-        self.__model = model
-        self.__model._make_predict_function()
-        self.__num_classes = model.get_layer(name="Classifier_Output").output_shape[1]
+        self._model = model
+        self.num_classes = self._get_num_classes(model) 
 
-    def train(self, train_data_generator, epochs, checkpoint_path=[], test_data_generator=None):
-        self.__model.summary()
-        callbacks = [keras.callbacks.ModelCheckpoint(
-            checkpoint_path, save_weights_only=False, save_best_only=True)]
-        self.__model.compile(optimizer=keras.optimizers.Adadelta(),
-         loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-        self.__model.fit_generator(train_data_generator, epochs=epochs,
-                                   callbacks=callbacks, validation_data=test_data_generator)
-
-    def test(self, dataset_generator):
-        self.__model.compile(optimizer=keras.optimizers.Adadelta(),loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-        per_class_correct = np.zeros(self.__num_classes)
-        per_class_total = np.zeros(self.__num_classes)
+    def _test(self, dataset_generator):
+        per_class_correct = np.zeros(self.num_classes)
+        per_class_total = np.zeros(self.num_classes)
         for i in range(len(dataset_generator)):
             batch, true_labels = dataset_generator[i]
-            predictions = self.__model.predict_on_batch(batch)
+            predictions = self.predict(batch)
             for prediction, true_label in zip(predictions, true_labels):
                 per_class_total[true_label] += 1
                 if np.argmax(prediction) == true_label:
@@ -36,16 +29,108 @@ class DocumentClassifierModel:
         total_accuracy =  np.around(np.sum(per_class_correct) / np.sum(per_class_total), 5)
         return TestResult(total_accuracy, per_class_accuracies)
 
-    def predict(self, documents):
-        return self.__model.predict(documents)
+    @abc.abstractclassmethod
+    def _get_num_classes(self, model):
+        raise Exception("Method _get_num_classes not implemented")
+
+    @abc.abstractclassmethod
+    def train(self, train_args):
+        raise Exception("Method train not implemented")
+
+    @abc.abstractclassmethod
+    def test(self, data):
+        raise Exception("Method test not implemented")
+
+    @abc.abstractclassmethod
+    def predict(self, data):
+        raise Exception("Method predict not implemented")
+
+    @abc.abstractclassmethod
+    def save(self, path):
+        raise Exception("Method predict not implemented")
+
+    @abc.abstractclassmethod
+    def get_input_length(self):
+        raise Exception("Method get_input_length predict not implemented")
+
+class SKLearnClassifier(ClassifierBase):
+
+    def __init__(self, model, num_classes, input_length):
+        self.__num_clases = num_classes
+        self.__input_length = input_length
+        super().__init__(model)
+
+    def train(self, train_args):
+        data_sequence = self.__generator_to_sequence(train_args.train_data_generator)
+        print("training model")
+        self._model.fit(*data_sequence)
+        self.save(os.path.join(train_args.save_dir, "model.pickle"))
+
+    def test(self, test_data_generator):
+        return self._test(test_data_generator)
+
+    def predict(self, data):
+        return self._model.predict_proba(data)
+
+    def save(self, out_path):
+        with open(out_path, mode="w+b") as outfile:
+            pickle.dump(self._model, outfile)
 
     def get_input_length(self):
-        input_layer = self.__model.get_layer(index=0)
+        return self.__input_length
+
+    def __generator_to_sequence(self, data_generator):
+        print("Converting generator to sequence")
+        indices = utils.split_list(range(len(data_generator)), 6)
+        args_sets = [ (data_generator, index) for index in indices ] 
+        batches = utils.run_operation_parallel(self._get_batch_indices, args_sets, len(indices))
+        sample_batches, label_batches = zip(*batches)
+        return np.concatenate(sample_batches), np.concatenate(label_batches)
+    
+    def _get_batch_indices(self, data_generator, indices):
+        sample_batches = []
+        label_batches = []
+        for index in indices:
+            samples, labels = data_generator.__getitem__(index)
+            sample_batches.append(samples)
+            label_batches.append(labels)
+        return np.concatenate(sample_batches), np.concatenate(label_batches)
+
+    def _get_num_classes(self, model):
+        return self.__num_clases
+
+class DocumentClassifierModel(ClassifierBase):
+
+    def __init__(self, model):
+        super().__init__(model)
+        self._model._make_predict_function()
+
+    def train(self, train_args):
+        self._model.summary()
+        callbacks = [keras.callbacks.ModelCheckpoint(
+            os.path.join(train_args.save_dir, "model.h5"), save_weights_only=False, save_best_only=True)]
+        self._model.compile(optimizer=keras.optimizers.Adadelta(),
+         loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+        self._model.fit_generator(train_args.train_data_generator, epochs=train_args.num_epochs,
+                                   callbacks=callbacks, validation_data=train_args.validation_data_generator)
+
+    def test(self, dataset_generator):
+        self._model.compile(optimizer=keras.optimizers.Adadelta(),loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+        return self._test(dataset_generator)
+
+    def predict(self, documents):
+        return self._model.predict(documents)
+
+    def _get_num_classes(self, model):
+        return model.get_layer(name="Classifier_Output").output_shape[1]
+
+    def get_input_length(self):
+        input_layer = self._model.get_layer(index=0)
         shape = input_layer.input_shape
-        return  shape[1]
+        return shape[1]
 
     def save(self, path):
-        self.__model.save(path, overwrite=True)
+        self._model.save(path, overwrite=True)
 
     def summary(self):
-        self.__model.summary()
+        self._model.summary()

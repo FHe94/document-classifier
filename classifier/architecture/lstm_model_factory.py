@@ -1,9 +1,10 @@
 from tensorflow import keras
-from .model_factory import ModelFactoryBase
+from .model_factory import DNNModelFactoryBase
 from .model_parameters import LSTMModelParams
 from ..layers.sum_timesteps import sum_timesteps
+from ..model.classifier_model import DocumentClassifierModel
 
-class LSTMModelFactory(ModelFactoryBase):
+class LSTMModelFactory(DNNModelFactoryBase):
 
     def __create_model(self, dataset_params, model_params, is_gpu=True):
         encoder_inputs = keras.layers.Input(shape=(None,), name="Encoder_Inputs")
@@ -11,7 +12,7 @@ class LSTMModelFactory(ModelFactoryBase):
         lstm_outputs = self.__create_lstm_layers(embedding, model_params, is_gpu)
         encoder_outputs = sum_timesteps(lstm_outputs)
         output_probabilities = self.__create_dense_layers(encoder_outputs, dataset_params.num_classes, model_params)
-        return keras.Model(inputs=encoder_inputs, outputs=output_probabilities)      
+        return DocumentClassifierModel(keras.Model(inputs=encoder_inputs, outputs=output_probabilities))
 
     def __create_lstm_layers(self, lstm_inputs, model_params, is_gpu = True):
         lstm_outputs = lstm_inputs

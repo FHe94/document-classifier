@@ -9,10 +9,10 @@ class Model:
         self.__document_processor = document_processor
         self.__feature_extractor = feature_extractor
 
-    def train_model(self, train_data, save_path, validation_data = None, num_epochs = 50):
-        train_data_generator = self._create_generator(*train_data)
-        validation_data_generator = self._create_generator(*validation_data, 64) if validation_data is not None else None
-        self.__classifier_model.train(train_data_generator, num_epochs, save_path, validation_data_generator)
+    def train_model(self, train_args):
+        train_args.train_data_generator = self._create_generator(*train_args.train_data)
+        train_args.validation_data_generator = self._create_generator(*train_args.validation_data, 64) if train_args.validation_data is not None else None
+        self.__classifier_model.train(train_args)
 
     def test_model(self, test_data):
         data_generator = self._create_generator(*test_data)

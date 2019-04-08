@@ -53,8 +53,9 @@ class Experiment:
         print("Training model {}".format(model.name))
         train_data = train_data_map.get_data_as_sequence()
         validation_data = validation_data_map.get_data_as_sequence()
-        save_path = os.path.join(self.__experiment_dir, "models", model.name, "model.h5")
-        model.train_model(train_data, save_path, validation_data, num_epochs)
+        save_dir = os.path.join(self.__experiment_dir, "models", model.name)
+        train_args = TrainArgs(train_data, validation_data, save_dir, num_epochs)
+        model.train_model(train_args)
 
     def __test_model(self, model, test_data_map, samples_for_memory_usage_test):
         print("Testing model {}".format(model.name))
@@ -159,3 +160,14 @@ class Experiment:
 
     def __get_model_dir(self, model_name):
         return os.path.join(self.__experiment_dir, "models", model_name)
+
+
+class TrainArgs:
+
+    def __init__(self, train_data, validation_data, save_dir, num_epochs, train_data_generator = None, validation_data_generator = None):
+        self.train_data = train_data
+        self.validation_data = validation_data
+        self.train_data_generator = train_data_generator
+        self.save_dir = save_dir
+        self.num_epochs = num_epochs
+        self.validation_data_generator = validation_data_generator

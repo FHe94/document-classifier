@@ -16,7 +16,7 @@ def get_training_config(args):
     if args.config == "":
         return config_reader.IneractiveConfigReader().read_training_config()
     else:
-        return TrainingConfigParser().parse_config(args.training_config_path)
+        return TrainingConfigParser().parse_config(args.config)
 
 def parse_args():
     parser = argparse.ArgumentParser()

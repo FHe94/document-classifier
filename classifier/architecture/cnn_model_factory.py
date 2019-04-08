@@ -1,8 +1,10 @@
 from tensorflow import keras
-from .model_factory import ModelFactoryBase
+from .model_factory import DNNModelFactoryBase
 from .model_parameters import CNNModelParams
+from ..model.classifier_model import DocumentClassifierModel
 
-class CNNModelFactory(ModelFactoryBase):
+
+class CNNModelFactory(DNNModelFactoryBase):
 
     def __create_model(self, dataset_params, model_params):
         inputs = keras.layers.Input(shape=(dataset_params.max_sequence_length,), name="CNN_Inputs")
@@ -13,7 +15,7 @@ class CNNModelFactory(ModelFactoryBase):
         dropout = keras.layers.Dropout(rate=model_params.dropout_rate, name="Dropout")(cnn_outputs_flattened)
         classifier_ouputs = keras.layers.Dense(units=dataset_params.num_classes, activation="softmax",
         kernel_initializer="glorot_uniform", bias_initializer=keras.initializers.Constant(0.1), name="Classifier_Output")(dropout)
-        return keras.Model(inputs=inputs, outputs=classifier_ouputs)
+        return DocumentClassifierModel(keras.Model(inputs=inputs, outputs=classifier_ouputs))
 
     def __create_convolution_layers(self, input_tensor, dataset_params, model_params):
         filter_outputs = []

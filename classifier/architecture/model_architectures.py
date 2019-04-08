@@ -2,9 +2,12 @@ import utils.utils as utils
 from .model_factory import ModelFactoryBase
 from .cnn_model_factory import CNNModelFactory
 from .lstm_model_factory import LSTMModelFactory
+from .sklearn_model_factories import RandomForestFactory, SVCModelFactory
 
 lstm = LSTMModelFactory()
 cnn = CNNModelFactory()
+svm = SVCModelFactory()
+randomforest = RandomForestFactory()
 
 def get(model_architecture):
     if isinstance(model_architecture, str):
