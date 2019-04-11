@@ -1,6 +1,7 @@
 import os
 import preprocessing.document_processors as processors
 import classifier.architecture.model_architectures as architecture
+import preprocessing.dataset.feature_extractors as feature_extractors
 from ..model.model import Model
 from .model_config_parser import ModelConfigParser
 from preprocessing.dataset.dataset_processor import DatasetProcessor
@@ -19,9 +20,9 @@ class ModelCreator:
         os.makedirs(out_dir, exist_ok=True)
         document_processor = processors.get(model_config.document_processor)
         dataset_params, dictionary = self.__process_dataset(data_map, document_processor, out_dir)
-        classifier_model, model_filename = self.__create_classifier_model(model_config, dataset_params, out_dir)
-        feature_extractor = WordIndicesFeatureExtractor()
+        feature_extractor = feature_extractors.get(model_config.feature_extractor)
         feature_extractor.prepare(dictionary)
+        classifier_model, model_filename = self.__create_classifier_model(model_config, feature_extractor.get_max_output_length(dataset_params), dataset_params, out_dir)
         self.__save_loader_config(out_dir, model_config.name, model_filename, document_processor)
         return Model(model_config.name, classifier_model, document_processor, feature_extractor)
 
@@ -31,11 +32,11 @@ class ModelCreator:
         DictionaryLoader().save_dictionary(dictionary, os.path.join(out_dir, self.__dictionary_filename))
         return dataset_params, dictionary
 
-    def __create_classifier_model(self, model_config, dataset_params, out_dir):
+    def __create_classifier_model(self, model_config, input_length, dataset_params, out_dir):
         model_factory = architecture.get(model_config.architecture) 
         model_filename = self.__get_full_model_filename(model_factory)
         model_path = os.path.join(out_dir, model_filename)
-        model = model_factory.create_new_model(dataset_params, model_config.params)
+        model = model_factory.create_new_model(input_length, dataset_params, model_config.params)
         model.save(model_path)
         return model, model_filename
 

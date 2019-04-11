@@ -29,10 +29,10 @@ class LSTMModelFactory(DNNModelFactoryBase):
         model_params.dense_units_per_layer, activation="relu", name="Dense_Layer_2")(dense_outputs)
         return keras.layers.Dense(num_classes, activation="softmax", name="Classifier_Output")(dense_outputs)
 
-    def _create_model_gpu(self, dataset_params, model_params):
+    def _create_model_gpu(self, input_length, dataset_params, model_params):
         return self.__create_model(dataset_params, model_params, True)
 
-    def _create_model_cpu(self, dataset_params, model_params):
+    def _create_model_cpu(self, input_length, dataset_params, model_params):
         return self.__create_model(dataset_params, model_params, False)
 
     def _create_default_model_params(self):

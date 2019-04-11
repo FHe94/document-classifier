@@ -3,10 +3,11 @@ import utils.utils as utils
 
 class ModelTrainingConfig:
 
-    def __init__(self, name, architecture, document_processor, model_params):
+    def __init__(self, name, architecture, document_processor, feature_extractor, model_params):
         self.name = name
         self.architecture = architecture
         self.document_processor = document_processor
+        self.feature_extractor = feature_extractor
         self.params = model_params
 
 
@@ -32,6 +33,7 @@ class TrainingConfigParser:
         model_configs = []
         for raw_model_config in config_json["models"]:
             model_config = ModelTrainingConfig(raw_model_config["model_name"], raw_model_config["model_architecture"],
-                                               raw_model_config["document_processor"], raw_model_config["model_params"])
+                                               raw_model_config.get("document_processor", "default"), raw_model_config.get("feature_extractor", "word_indices"),
+                                               raw_model_config.get("model_params", dict()))
             model_configs.append(model_config)
         return TrainingConfig(config_json.get("number_epochs", 50), config_json["dataset_directory"], model_configs)

@@ -15,6 +15,9 @@ class Dictionary:
     def __contains__(self, key):
         return key in self.__values
 
+    def __len__(self):
+        return self.__length
+
     def get_token_list(self):
         return list(self.__values.keys())
 
@@ -35,6 +38,3 @@ class Dictionary:
 
     def get_values(self):
         return self.__values
-
-    def get_length(self):
-        return self.__length

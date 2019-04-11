@@ -61,7 +61,7 @@ class DatasetProcessor:
         result_dict["<unknown>"] = 1
         self.__index_words(result_dict)
         dictionary = Dictionary(result_dict)
-        return DatasetParams(dictionary.get_length(), num_classes, total_max_sequence_length), dictionary
+        return DatasetParams(len(dictionary), num_classes, total_max_sequence_length), dictionary
 
     def __index_words(self, dictionary):
         index = 0

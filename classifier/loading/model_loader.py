@@ -1,5 +1,6 @@
 import os
 import preprocessing.document_processors as processors
+import preprocessing.dataset.feature_extractors as feature_extractors
 from .model_config_parser import ModelConfigParser
 from preprocessing.dictionary_operations.dictionary_loader import DictionaryLoader
 from preprocessing.dataset.feature_extractor import WordIndicesFeatureExtractor
@@ -19,7 +20,7 @@ class ModelLoader:
         config = ModelConfigParser().parse_config(config_path)
         dictionary = self.__load_dictionary(path_resolve_function(config.dictionary_path))
         document_processor = self.__load_document_processor(config.document_processor)
-        feature_extractor = WordIndicesFeatureExtractor()
+        feature_extractor = feature_extractors.get(config.feature_extractor)
         feature_extractor.prepare(dictionary)
         model = ModelFactoryBase().load_model(path_resolve_function(config.model_path))
         return Model(config.name, model, document_processor, feature_extractor)

@@ -7,9 +7,9 @@ from ..model.classifier_model import DocumentClassifierModel, SKLearnClassifier
 
 class ModelFactoryBase:
 
-    def create_new_model(self, dataset_params, model_params = None):
+    def create_new_model(self, input_length, dataset_params, model_params = None):
         params = self.__merge_model_params(model_params)
-        return self._create_model(dataset_params, params)
+        return self._create_model(input_length, dataset_params, params)
 
     def load_model(self, model_path):
         if self.__is_keras_model(model_path):
@@ -45,7 +45,7 @@ class ModelFactoryBase:
         return out_params
 
     @abc.abstractclassmethod
-    def _create_model(self, dataset_params, model_params):
+    def _create_model(self, input_length, dataset_params, model_params):
         raise Exception("Method _create_default_model_params not implemented")
 
     @abc.abstractclassmethod
@@ -54,8 +54,8 @@ class ModelFactoryBase:
 
 class DNNModelFactoryBase(ModelFactoryBase):
 
-    def _create_model(self, dataset_params, model_params):
-        return self._create_model_gpu(dataset_params, model_params) if self.__is_gpu_version() else self._create_model_cpu(dataset_params, model_params)
+    def _create_model(self, input_length, dataset_params, model_params):
+        return self._create_model_gpu(input_length, dataset_params, model_params) if self.__is_gpu_version() else self._create_model_cpu(input_length, dataset_params, model_params)
 
     def __is_gpu_version(self):
         devices = device_lib.list_local_devices()
@@ -65,10 +65,10 @@ class DNNModelFactoryBase(ModelFactoryBase):
         return False
 
     @abc.abstractclassmethod
-    def _create_model_gpu(self, dataset_params, model_params):
+    def _create_model_gpu(self, input_length, dataset_params, model_params):
         raise Exception("Method _create_model_gpu not implemented")
 
     @abc.abstractclassmethod
-    def _create_model_cpu(self, dataset_params, model_params):
+    def _create_model_cpu(self, input_length, dataset_params, model_params):
         raise Exception("Method _create_model_cpu not implemented")
 

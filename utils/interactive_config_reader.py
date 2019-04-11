@@ -8,7 +8,8 @@ class IneractiveConfigReader:
         model_architecture = self.__get_input_or_default("Model architecture", "cnn")
         model_name = self.__get_input_or_default("Model name", model_architecture)
         document_processor = self.__get_input_or_default("Document processor", "default")
-        return TrainingConfig(num_epochs, dataset_dir, [ ModelTrainingConfig(model_name, model_architecture, document_processor, dict()) ])
+        feature_extractor = self.__get_input_or_default("Feature extractor", "word_indices")
+        return TrainingConfig(num_epochs, dataset_dir, [ ModelTrainingConfig(model_name, model_architecture, document_processor, feature_extractor, dict())])
 
     def __get_input_or_default(self, prompt, default, type = str):
         user_input = input("{} ({}):".format(prompt, str(default)))

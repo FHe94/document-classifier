@@ -4,9 +4,9 @@ from ..model.classifier_model import SKLearnClassifier
 
 class SVCModelFactory(ModelFactoryBase):
 
-    def _create_model(self, dataset_params, model_params):
+    def _create_model(self, input_length, dataset_params, model_params):
         model = sklearn.svm.SVC(C= model_params.C, kernel= model_params.kernel, degree= model_params.degree, probability=True)
-        return SKLearnClassifier(model, dataset_params.num_classes, dataset_params.max_sequence_length)
+        return SKLearnClassifier(model, dataset_params.num_classes, input_length)
 
     def _create_default_model_params(self):
         return SVCModelParams(1.0, "rbf", 3)
@@ -15,7 +15,7 @@ class RandomForestFactory(ModelFactoryBase):
 
     def _create_model(self, dataset_params, model_params):
         model = sklearn.ensemble.RandomForestClassifier()
-        return SKLearnClassifier(model, dataset_params.num_classes)
+        return SKLearnClassifier(model, dataset_params.num_classes, input_length)
 
     def _create_default_model_params(self):
         return RandomForestParams()
