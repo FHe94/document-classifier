@@ -3,7 +3,7 @@ import memory_profiler
 
 class MemoryProfiler:
 
-    def profile(self, args, interval = 0.1):
+    def profile(self, args, interval = 0.01):
         with subprocess.Popen(args, shell=True) as process:
             memory_usage = memory_profiler.memory_usage(process, interval=interval, include_children = True)
             peak_memory_usage = max(memory_usage)
