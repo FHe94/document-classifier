@@ -1,17 +1,18 @@
 import abc
+import sklearn.preprocessing
 
-class FeatureExtractorBase():
+class FeatureExtractorBase(abc.ABC):
 
     def prepare(self, dictionary):
         self._dictionary = dictionary
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def get_max_output_length(self, dataset_params):
-        raise Exception("Method get_output_length not implemented")
+        return None
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def extract_features(self, words):
-        raise Exception("Method extract_features not implemented")
+        return None
 
 class WordIndicesFeatureExtractor(FeatureExtractorBase):
 

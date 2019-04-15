@@ -9,7 +9,7 @@ from .test_result import TestResult
 import pickle
 import utils.utils as utils
 
-class ClassifierBase:
+class ClassifierBase(abc.ABC):
 
     def __init__(self, model):
         self._model = model
@@ -29,29 +29,29 @@ class ClassifierBase:
         total_accuracy =  np.around(np.sum(per_class_correct) / np.sum(per_class_total), 5)
         return TestResult(total_accuracy, per_class_accuracies)
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def _get_num_classes(self, model):
-        raise Exception("Method _get_num_classes not implemented")
+        return None
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def train(self, train_args):
-        raise Exception("Method train not implemented")
+        return None
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def test(self, data):
-        raise Exception("Method test not implemented")
+        return None
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def predict(self, data):
-        raise Exception("Method predict not implemented")
+        return None
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def save(self, path):
-        raise Exception("Method predict not implemented")
+        return None
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def get_input_length(self):
-        raise Exception("Method get_input_length predict not implemented")
+        return None
 
 class SKLearnClassifier(ClassifierBase):
 

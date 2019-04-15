@@ -1,14 +1,14 @@
 import abc
 import re
 
-class PlaceholderWord:
+class PlaceholderWord(abc.ABC):
 
     def __init__(self):
         self.Label = ""
 
     @abc.abstractmethod
     def test_string(string):
-        return
+        return None
 
 class DatePlaceholder(PlaceholderWord):
 

@@ -5,7 +5,7 @@ from tensorflow import keras
 from tensorflow.python.client import device_lib
 from ..model.classifier_model import DocumentClassifierModel, SKLearnClassifier
 
-class ModelFactoryBase:
+class ModelFactoryBase(abc.ABC):
 
     def create_new_model(self, input_length, dataset_params, model_params = None):
         params = self.__merge_model_params(model_params)
@@ -44,13 +44,13 @@ class ModelFactoryBase:
                 setattr(out_params, name, value)
         return out_params
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def _create_model(self, input_length, dataset_params, model_params):
-        raise Exception("Method _create_default_model_params not implemented")
+        return None
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def _create_default_model_params(self):
-        raise Exception("Method _create_default_model_params not implemented")
+        return None
 
 class DNNModelFactoryBase(ModelFactoryBase):
 
@@ -64,11 +64,11 @@ class DNNModelFactoryBase(ModelFactoryBase):
                 return True
         return False
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def _create_model_gpu(self, input_length, dataset_params, model_params):
-        raise Exception("Method _create_model_gpu not implemented")
+        return None
 
-    @abc.abstractclassmethod
+    @abc.abstractmethod
     def _create_model_cpu(self, input_length, dataset_params, model_params):
-        raise Exception("Method _create_model_cpu not implemented")
+        return None
 

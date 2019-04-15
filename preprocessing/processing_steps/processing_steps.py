@@ -1,11 +1,9 @@
-import abc
 import os.path
 from nltk.stem import SnowballStemmer, PorterStemmer
 from .word_placeholders import DatePlaceholder, NumericPlaceholder
 
 class ProcessingStep:
 
-    @abc.abstractclassmethod
     def process(self, tokens):
         return tokens
 
