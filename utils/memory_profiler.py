@@ -16,7 +16,7 @@ class MemoryUsageInfo:
         self.peak_memory_usage = peak_memory_usage
         self.interval = interval
 
-    def __format_data_point(self, data_point):
+    def format_data_point(self, data_point):
         if data_point > 1024:
             value = data_point/1024
             unit = "Gb"
@@ -26,8 +26,8 @@ class MemoryUsageInfo:
         return "{} {}".format(round(value, 3), unit)
 
     def __str__(self):
-        str_parts = [ "Peak usage: {}".format(self.__format_data_point(self.peak_memory_usage)) ]
+        str_parts = [ "Peak usage: {}".format(self.format_data_point(self.peak_memory_usage)) ]
         for data_point in self.memory_usage:
-            str_parts.append(self.__format_data_point(data_point))
+            str_parts.append(self.format_data_point(data_point))
         return "\n".join(str_parts)
 

@@ -42,6 +42,13 @@ def read_json_file(path):
     with open(path, encoding = "utf-8") as json_file:
         return json.load(json_file, encoding="utf-8")
 
+def try_parse_json_config(parse_function, config_path):
+    try:
+        return parse_function(config_path)
+    except KeyError as e:
+        raise Exception('Unable to load config. Key "{}" not found in file "{}"'.format(
+            e.args[0], config_path))
+
 def get_resource_by_condition(scope, condition):
     for name, attribute in scope.items():
         if condition(name, attribute):

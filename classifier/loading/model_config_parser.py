@@ -1,7 +1,6 @@
 import json
 import utils.utils as utils
 
-
 class ModelConfig:
 
     def __init__(self, model_name, model_path, dictionary_path, document_processor, feature_extractor):
@@ -14,13 +13,6 @@ class ModelConfig:
 
 class ModelConfigParser:
 
-    def parse_config(self, config_file_path):
-        try:
-            return self.__try_parse_config(config_file_path)
-        except KeyError as e:
-            raise Exception('Unable to load model configuration due to invalid config file. Key "{}" not found in file "{}"'.format(
-                e.args[0], config_file_path))
-
     def write_config(self, config_file_path, model_name, model_path, dictionary_path, document_processor = "default", feature_extractor = "word_indices"):
         out_dict = {
             "model_name": model_name,
@@ -31,7 +23,10 @@ class ModelConfigParser:
         }
         utils.save_json_file(config_file_path, out_dict)
 
-    def __try_parse_config(self, config_file_path):
+    def parse_config(self, config_path):
+        return utils.try_parse_json_config(self._parse_config, config_path)
+
+    def _parse_config(self, config_file_path):
         file_json = utils.read_json_file(config_file_path)
         self.__ensure_json_is_dict(file_json)
         return ModelConfig(file_json["model_name"], file_json["model_path"], file_json["dictionary_path"],

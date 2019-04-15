@@ -47,7 +47,7 @@ class Experiment:
             model_config.load_model_from_data_map(train_data_map)
             test_results.append(self.__test_model(model_config, test_data_map, samples_for_memory_usage_test))
         self.__print_results(test_results, data_map.get_labels())
-        self.__save_results(os.path.join(self.__experiment_dir, self.__results_filename), test_results, "text")
+        self.__save_results(os.path.join(self.__experiment_dir, "results", self.__results_filename), test_results, "text")
 
     def __train_model(self, model, train_data_map, validation_data_map, num_epochs):
         print("Training model {}".format(model.name))
@@ -65,22 +65,10 @@ class Experiment:
         print(test_result.per_class_accuracies)
         print("Measuring memory usage")
         model.predict(samples_for_memory_usage_test)
-        peak_memory_usage = self.__get_pretty_printed_memory_usage(self.__test_memory_usage_for_predict(model, samples_for_memory_usage_test))
-        print(peak_memory_usage)
-        test_result.peak_memory_usage = peak_memory_usage
+        memory_usage_info = self.__test_memory_usage_for_predict(model, samples_for_memory_usage_test)
+        print(memory_usage_info.format_data_point(memory_usage_info.peak_memory_usage))
+        test_result.memory_usage_info = memory_usage_info
         return test_result
-
-    def __get_pretty_printed_memory_usage(self, peak_memory_usage):
-        unit = None
-        value = 0
-        if peak_memory_usage > 1024:
-            unit = "Gb"
-            value = peak_memory_usage / 1024
-        else:
-            unit = "Mb"
-            value = peak_memory_usage
-        return "{} {}".format(round(value, 4), unit)
-
 
     def __test_memory_usage_for_predict(self, model, samples):
         profiler = MemoryProfiler()
