@@ -27,7 +27,7 @@ class ModelConfigParser:
             "model_path": model_path,
             "dictionary_path": dictionary_path,
             "document_processor": document_processor if isinstance(document_processor, str) else document_processor.name,
-            "feature_extractor": feature_extractor
+            "features": feature_extractor
         }
         utils.save_json_file(config_file_path, out_dict)
 
@@ -35,7 +35,7 @@ class ModelConfigParser:
         file_json = utils.read_json_file(config_file_path)
         self.__ensure_json_is_dict(file_json)
         return ModelConfig(file_json["model_name"], file_json["model_path"], file_json["dictionary_path"],
-                           file_json.get("document_processor", "default"), file_json.get("feature_extractor", "word_indices"))
+                           file_json.get("document_processor", "default"), file_json.get("features", "word_indices"))
 
     def __ensure_json_is_dict(self, file_json):
         if not isinstance(file_json, dict):
