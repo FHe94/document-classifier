@@ -33,11 +33,11 @@ class WordCountFeatureExtractor(FeatureExtractorBase):
     def get_max_output_length(self, dataset_params):
         return dataset_params.dictionary_length
 
-    def __extract_features_dense(self, words):
+    def __extract_features_dense(self, words, normlize = True):
         feature_vector = [0] * len(self._dictionary)
         for word in words:
             feature_vector[self._dictionary.get_word_index(word)] += 1
-        return feature_vector
+        return sklearn.preprocessing.scale(feature_vector) if normlize else feature_vector
 
     def __extract_features_sparse(self, words):
         feature_dict = dict()
