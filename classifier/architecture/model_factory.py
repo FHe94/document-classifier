@@ -5,7 +5,7 @@ from tensorflow import keras
 from tensorflow.python.client import device_lib
 from ..model.classifier_model import DocumentClassifierModel, SKLearnClassifier
 
-class ModelFactoryBase(abc.ABC):
+class ModelFactoryBase:
 
     def create_new_model(self, input_length, dataset_params, model_params = None):
         params = self.__merge_model_params(model_params)
@@ -44,11 +44,9 @@ class ModelFactoryBase(abc.ABC):
                 setattr(out_params, name, value)
         return out_params
 
-    @abc.abstractmethod
     def _create_model(self, input_length, dataset_params, model_params):
         return None
 
-    @abc.abstractmethod
     def _create_default_model_params(self):
         return None
 

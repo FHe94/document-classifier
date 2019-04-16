@@ -13,7 +13,7 @@ class SVCModelFactory(ModelFactoryBase):
 
 class RandomForestFactory(ModelFactoryBase):
 
-    def _create_model(self, dataset_params, model_params):
+    def _create_model(self, input_length, dataset_params, model_params):
         model = sklearn.ensemble.RandomForestClassifier()
         return SKLearnClassifier(model, dataset_params.num_classes, input_length)
 

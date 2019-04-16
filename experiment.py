@@ -64,23 +64,16 @@ class Experiment:
         print("Per-class accuracies: ")
         print(test_result.per_class_accuracies)
         print("Measuring memory usage")
-        model.predict(samples_for_memory_usage_test)
-        memory_usage_info = self.__test_memory_usage_for_predict(model, samples_for_memory_usage_test)
+        memory_usage_info = self.__test_memory_usage_for_predict(model, samples_for_memory_usage_test[0])
         print(memory_usage_info.format_data_point(memory_usage_info.peak_memory_usage))
         test_result.memory_usage_info = memory_usage_info
         return test_result
 
-    def __test_memory_usage_for_predict(self, model, samples):
+    def __test_memory_usage_for_predict(self, model, sample):
         profiler = MemoryProfiler()
-        memory_usages = []
         config_path = os.path.join(self.__get_model_dir(model.name), "{}_config.json".format(model.name))
-        base_args = [ "python3", "predict.py", config_path ]
-        for i in range(len(samples)):
-            print("Measuring {}/{}".format(i+1, len(samples)))
-            args = base_args + [ samples[i] ]
-            mem_usage = profiler.profile(args)
-            memory_usages.append(mem_usage.peak_memory_usage)
-        return max(memory_usages)
+        args = [ "python3", "predict.py", config_path, sample ]
+        return profiler.profile(args)
         
 
     def __print_results(self, test_results, labels):
