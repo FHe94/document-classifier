@@ -30,8 +30,8 @@ class ModelFactoryBase:
     def __load_sklearn_model(self, model_path):
         with open(model_path, "r+b") as model_file:
             model = pickle.load(model_file, encoding="utf-8")
-            num_classes = len(model.classes_)
-            input_length = model.shape_fit_[1]
+            num_classes = model.custom_attr_num_classes
+            input_length = model.custom_attr_input_length
             return SKLearnClassifier(model, num_classes, input_length)
 
     def __is_keras_model(self, model_path):

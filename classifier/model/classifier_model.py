@@ -23,11 +23,16 @@ class ClassifierBase(abc.ABC):
             predictions = self.predict(batch)
             for prediction, true_label in zip(predictions, true_labels):
                 per_class_total[true_label] += 1
-                if np.argmax(prediction) == true_label:
+                predicted_label = self.__get_predicted_label(prediction)
+                if np.argmax(predicted_label) == true_label:
                     per_class_correct[true_label] += 1
         per_class_accuracies = np.around(per_class_correct / per_class_total, 3)
         total_accuracy =  np.around(np.sum(per_class_correct) / np.sum(per_class_total), 5)
         return TestResult(total_accuracy, per_class_accuracies)
+
+    def __get_predicted_label(self, prediction):
+        return prediction if isinstance(prediction, int) else np.argmax(prediction)
+
 
     @abc.abstractmethod
     def _get_num_classes(self, model):
@@ -59,6 +64,13 @@ class SKLearnClassifier(ClassifierBase):
         self.__num_clases = num_classes
         self.__input_length = input_length
         super().__init__(model)
+        self.__predict_function = self.__get_predict_function()
+
+    def __get_predict_function(self):
+        try:
+            return self._model.predict_proba
+        except AttributeError:
+            return self._model.predict
 
     def train(self, train_args):
         data_sequence = self.__generator_to_sequence(train_args.train_data_generator)
@@ -70,10 +82,12 @@ class SKLearnClassifier(ClassifierBase):
         return self._test(test_data_generator)
 
     def predict(self, data):
-        return self._model.predict_proba(data)
+        return self.__predict_function(data)
 
     def save(self, out_path):
         with open(out_path, mode="w+b") as outfile:
+            setattr(self._model, "custom_attr_input_length", self.__input_length)
+            setattr(self._model, "custom_attr_num_classes", self.__num_clases)
             pickle.dump(self._model, outfile)
 
     def get_input_length(self):

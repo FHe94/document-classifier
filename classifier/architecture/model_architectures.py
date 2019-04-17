@@ -1,13 +1,17 @@
 import utils.utils as utils
+import classifier.architecture.sklearn_model_factories as sklearnmodels
 from .model_factory import ModelFactoryBase
 from .cnn_model_factory import CNNModelFactory
 from .lstm_model_factory import LSTMModelFactory
-from .sklearn_model_factories import RandomForestFactory, SVCModelFactory
 
 lstm = LSTMModelFactory()
 cnn = CNNModelFactory()
-svm = SVCModelFactory()
-randomforest = RandomForestFactory()
+svm = sklearnmodels.SVCModelFactory()
+linearsvc = sklearnmodels.LinearSVCModelFactory()
+gaussian_nb = sklearnmodels.GaussianNBModelFactory()
+multinomial_nb = sklearnmodels.MultinomialNBModelFactory()
+bernoulli_nb = sklearnmodels.BernoulliNBModelFactory()
+randomforest = sklearnmodels.RandomForestFactory()
 
 def get(model_architecture):
     if isinstance(model_architecture, str):
