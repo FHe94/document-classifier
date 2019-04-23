@@ -14,9 +14,15 @@ class TestResult:
         return """
 Results for model "{}":
     Accuracy:{:>20}
-    Peak memory usage: {:>10}
+    {}
     Per-class accuracies:\t {}
-        """.format(self.model_name, self.accuracy, self.memory_usage_info.format_data_point(self.memory_usage_info.peak_memory_usage), self.__per_class_accuracies_to_string())
+        """.format(self.model_name, self.accuracy, self.__get_memory_usage_string(), self.__per_class_accuracies_to_string())
+
+    def __get_memory_usage_string(self):
+        if self.memory_usage_info is not None:
+            return "Peak memory usage: {:>10}".format(self.memory_usage_info.format_data_point(self.memory_usage_info.peak_memory_usage))
+        else:
+            return ""
 
     def __per_class_accuracies_to_string(self):
         if len(self.labels) == len(self.per_class_accuracies):

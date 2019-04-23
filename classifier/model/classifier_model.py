@@ -24,7 +24,7 @@ class ClassifierBase(abc.ABC):
             for prediction, true_label in zip(predictions, true_labels):
                 per_class_total[true_label] += 1
                 predicted_label = self.__get_predicted_label(prediction)
-                if np.argmax(predicted_label) == true_label:
+                if predicted_label == true_label:
                     per_class_correct[true_label] += 1
         per_class_accuracies = np.around(per_class_correct / per_class_total, 3)
         total_accuracy =  np.around(np.sum(per_class_correct) / np.sum(per_class_total), 5)

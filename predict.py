@@ -6,12 +6,12 @@ from classifier.loading.model_loader import ModelLoader
 def main():
     args = parse_args()
     model = ModelLoader().load_model(args.model_config_path)
-    print(model.predict(args.document_path))
+    print(model.predict(args.documents))
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("model_config_path")
-    parser.add_argument("document_path")
+    parser.add_argument("documents", nargs="+")
     return parser.parse_args()
 
 if __name__ == "__main__":

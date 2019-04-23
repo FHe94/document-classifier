@@ -42,7 +42,7 @@ class Experiment:
         data_map = self.__get_or_create_data_map(os.path.join(self.__experiment_dir, self.__data_map_filename), self.__dataset_dir)
         train_data_map, validation_data_map, test_data_map = self.__get_or_create_train_test_validation_split(data_map)
         test_results = []
-        samples_for_memory_usage_test = self.__get_samples_for_memory_usage_test(test_data_map, 1)
+        samples_for_memory_usage_test = self.__get_samples_for_memory_usage_test(test_data_map, 100)
         for model_config in self.__model_configs:
             model_config.load_model_from_data_map(train_data_map)
             test_results.append(self.__test_model(model_config, test_data_map, samples_for_memory_usage_test))
@@ -64,15 +64,15 @@ class Experiment:
         print("Per-class accuracies: ")
         print(test_result.per_class_accuracies)
         print("Measuring memory usage")
-        memory_usage_info = self.__test_memory_usage_for_predict(model, samples_for_memory_usage_test[0])
+        memory_usage_info = self.__test_memory_usage_for_predict(model, samples_for_memory_usage_test)
         print(memory_usage_info.format_data_point(memory_usage_info.peak_memory_usage))
         test_result.memory_usage_info = memory_usage_info
         return test_result
 
-    def __test_memory_usage_for_predict(self, model, sample):
+    def __test_memory_usage_for_predict(self, model, samples):
         profiler = MemoryProfiler()
         config_path = os.path.join(self.__get_model_dir(model.name), "{}_config.json".format(model.name))
-        args = [ "python3", "predict.py", config_path, sample ]
+        args = [ "python3", "predict.py", config_path] + samples
         return profiler.profile(args)
         
 
