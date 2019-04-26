@@ -2,6 +2,7 @@ import utils.utils as utils
 from utils.memory_profiler import MemoryUsageInfo
 import matplotlib.pyplot as plt
 import math
+import os.path
 
 class TestResult:
 
@@ -38,15 +39,51 @@ Results for model "{}":
 
 class TestResultLoader:
 
-    def save_test_results(self, path, test_results):
+    __save_function_dict = {
+        "json": lambda self, path, test_results: self.__save_results_as_json(path, test_results),
+        "text": lambda self, path, test_results: self.__save_results_as_text(path, test_results),
+    }
+
+    def save_test_results(self, path, test_results, save_as = "json"):
+        try:
+            if isinstance(save_as, list):
+                self.__save_as_formats(path, test_results, save_as)
+            else:
+                self.__save_as_format(path, test_results, save_as)
+        except KeyError as e:
+            raise Exception("Cannot save test results. Unknown format {}!".format(e.args[0]))
+
+    def __save_as_formats(self, path, test_results, save_as):
+        if len(save_as):
+            for output_format in save_as:
+                self.__save_as_format(path, test_results, output_format)
+        else:
+            raise Exception("Cannot save test results. No ouput format specified!")
+
+    def __save_as_format(self, path, test_results, output_format):
+        if isinstance(output_format, str):
+            TestResultLoader.__save_function_dict[output_format](self, path, test_results)
+        else:
+            raise Exception("Output format must be string or list of strings!")
+
+    def __save_results_as_json(self, path, test_results):
         results_json = []
         for result in test_results:
-            result_dict = result.__dict__
+            result_dict = result.__dict__.copy()
             result_dict["per_class_accuracies"] = result_dict["per_class_accuracies"].tolist()
             if result.memory_usage_info is not None:
-                result_dict["memory_usage_info"] = result.memory_usage_info.__dict__
+                result_dict["memory_usage_info"] = result.memory_usage_info.__dict__.copy()
             results_json.append(result_dict)
-        utils.save_json_file(path, results_json)
+        utils.save_json_file(self.__normalize_path(path, "json"), results_json)
+
+    def __save_results_as_text(self, path, test_results):
+        with open(self.__normalize_path(path, "txt"), mode="w", encoding="utf-8") as out_file:
+            for result in test_results:
+                out_file.write(str(result))
+                out_file.write("-"*25)
+
+    def __normalize_path(self, path, file_extension):
+        return "{}.{}".format(os.path.splitext(path)[0], file_extension)
 
     def load_test_results(self, path):
         return utils.try_parse_json_config(self._load_test_results, path)
@@ -89,6 +126,7 @@ class TestResultPlotter:
         plt.title(plot_title)
         plt.ylabel("Memory usage in MB")
         plt.xlabel("Time in seconds")
+        plt.grid()
         plot_function = self.__plot_test_result_single if len(test_results) == 1 else self.__plot_test_result_multiple
         for test_result in test_results:
             plot_function(test_result)

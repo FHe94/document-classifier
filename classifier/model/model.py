@@ -14,8 +14,8 @@ class Model:
         train_args.validation_data_generator = self._create_generator(*train_args.validation_data, 64) if train_args.validation_data is not None else None
         self.__classifier_model.train(train_args)
 
-    def test_model(self, test_data):
-        data_generator = self._create_generator(*test_data)
+    def test_model(self, samples, labels):
+        data_generator = self._create_generator(samples, labels)
         test_result = self.__classifier_model.test(data_generator)
         test_result.model_name = self.name
         return test_result

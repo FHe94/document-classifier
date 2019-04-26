@@ -5,6 +5,7 @@ from classifier.loading.model_creator import ModelCreator
 from preprocessing.dataset.train_data_map import TrainingDataMap
 from utils.memory_profiler import MemoryProfiler
 from classifier.model.test_result import TestResultLoader
+from utils.model_tester import ModelTester
 
 class Experiment:
 
@@ -22,33 +23,20 @@ class Experiment:
         os.makedirs(self.__experiment_dir, exist_ok=True)
         data_map = self.__get_or_create_data_map(os.path.join(self.__experiment_dir, self.__data_map_filename), self.__training_config.dataset_dir)
         train_data_map, validation_data_map, test_data_map = self.__get_or_create_train_test_validation_split(data_map)
-        test_results = []
-        samples_for_memory_usage_test = self.__get_samples_for_memory_usage_test(test_data_map, 1)
-        models = self.__load_models(train_data_map)
+        models = self.__create_models(train_data_map)
         for model in models:
             self.__train_model(model, train_data_map, validation_data_map, self.__training_config.num_epochs)
-            test_results.append(self.__test_model(model, test_data_map, samples_for_memory_usage_test))
+        test_results = ModelTester().test_models([self.__get_model_config_path(model.name) for model in models], *test_data_map.get_data_as_sequence())
         self.__print_results(test_results, data_map.get_labels())
         self.__save_results(os.path.join(self.__experiment_dir, self.__results_filename), test_results)
 
-    def __load_models(self, training_data_map):
+    def __create_models(self, training_data_map):
         model_creator = ModelCreator()
         models = []
         for model_config in self.__training_config.models:
             model_dir = self.__get_model_dir(model_config.name)
             models.append(model_creator.create_model(model_config, training_data_map, model_dir))
         return models
-
-    def run_test(self):
-        data_map = self.__get_or_create_data_map(os.path.join(self.__experiment_dir, self.__data_map_filename), self.__dataset_dir)
-        train_data_map, validation_data_map, test_data_map = self.__get_or_create_train_test_validation_split(data_map)
-        test_results = []
-        samples_for_memory_usage_test = self.__get_samples_for_memory_usage_test(test_data_map, 100)
-        for model_config in self.__model_configs:
-            model_config.load_model_from_data_map(train_data_map)
-            test_results.append(self.__test_model(model_config, test_data_map, samples_for_memory_usage_test))
-        self.__print_results(test_results, data_map.get_labels())
-        self.__save_results(os.path.join(self.__experiment_dir, "results", self.__results_filename), test_results)
 
     def __train_model(self, model, train_data_map, validation_data_map, num_epochs):
         print("Training model {}".format(model.name))
@@ -57,24 +45,6 @@ class Experiment:
         save_dir = os.path.join(self.__experiment_dir, "models", model.name)
         train_args = TrainArgs(train_data, validation_data, save_dir, num_epochs)
         model.train_model(train_args)
-
-    def __test_model(self, model, test_data_map, samples_for_memory_usage_test):
-        print("Testing model {}".format(model.name))
-        test_result = model.test_model(test_data_map.get_data_as_sequence())
-        print("Total accuracy: {}".format(test_result.accuracy))
-        print("Per-class accuracies: ")
-        print(test_result.per_class_accuracies)
-        print("Measuring memory usage")
-        memory_usage_info = self.__test_memory_usage_for_predict(model, samples_for_memory_usage_test)
-        print(memory_usage_info.format_data_point(memory_usage_info.peak_memory_usage))
-        test_result.memory_usage_info = memory_usage_info
-        return test_result
-
-    def __test_memory_usage_for_predict(self, model, samples):
-        profiler = MemoryProfiler()
-        config_path = os.path.join(self.__get_model_dir(model.name), "{}_config.json".format(model.name))
-        args = [ "python3", "predict.py", config_path] + samples
-        return profiler.profile(args)
         
 
     def __print_results(self, test_results, labels):
@@ -85,14 +55,7 @@ class Experiment:
 
     def __save_results(self, path, test_results):
         print("Saving results to \"{}\"".format(os.path.dirname(path)))
-        self.__save_results_as_text("{}.txt".format(path), test_results)
-        TestResultLoader().save_test_results("{}.json".format(path), test_results)
-
-    def __save_results_as_text(self, path, test_results):
-        with open(path, mode="w", encoding="utf-8") as out_file:
-            for result in test_results:
-                out_file.write(str(result))
-                out_file.write("-"*25)
+        TestResultLoader().save_test_results(path, test_results, ["json", "text"])
 
     def __get_or_create_data_map(self, data_map_path, dataset_dir):
         train_data_map = None
@@ -142,6 +105,9 @@ class Experiment:
 
     def __get_model_dir(self, model_name):
         return os.path.join(self.__experiment_dir, "models", model_name)
+    
+    def __get_model_config_path(self, model_name):
+        return os.path.join(self.__get_model_dir(model_name), "{}_config.json".format(model_name))
 
 
 class TrainArgs:

@@ -35,8 +35,9 @@ def run_operation_parallel(operation, arg_sets, num_processes=12):
     return [ result.get(1) for result in results ]
 
 def save_json_file(path, content):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    json.dump(content, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=4)
+    with open(path, "w", encoding="utf-8") as out_file:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        json.dump(content, out_file, ensure_ascii=False, indent=4)
 
 def read_json_file(path):
     with open(path, encoding = "utf-8") as json_file:
