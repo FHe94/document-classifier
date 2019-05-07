@@ -1,7 +1,7 @@
 from tensorflow import keras
 from .model_factory import DNNModelFactoryBase
 from .model_parameters import LSTMModelParams
-from ..layers.sum_timesteps import sum_timesteps
+from ..layers.lambda_layers import sum_timesteps
 from ..model.classifier_model import DocumentClassifierModel
 
 class LSTMModelFactory(DNNModelFactoryBase):
